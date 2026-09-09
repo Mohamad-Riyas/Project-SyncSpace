@@ -1,0 +1,193 @@
+.users-panel {
+  width: 100%;
+  height: 100%;
+  background: #09101d;
+  color: #e2e8f0;
+  padding: 25px;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+/* =========================
+   HEADER
+========================= */
+
+.users-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 25px;
+
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 15px;
+}
+
+.users-header h2 {
+  margin: 0;
+
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.users-header span {
+  color: #64748b;
+
+  font-size: 13px;
+}
+
+.add-user-form {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.add-user-form input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid #26364d;
+  border-radius: 8px;
+  background: #0f1a2c;
+  color: #e2e8f0;
+  padding: 10px 12px;
+}
+
+.add-user-form button {
+  border: 1px solid rgba(34, 211, 238, .45);
+  border-radius: 8px;
+  background: rgba(6, 182, 212, .16);
+  color: #67e8f9;
+  padding: 0 14px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+/* =========================
+   USER LIST
+========================= */
+
+.users-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* =========================
+   USER CARD
+========================= */
+
+.user-card {
+  display: flex;
+  align-items: center;
+
+  padding: 14px;
+
+  background: #0f1a2c;
+
+  border: 1px solid #26364d;
+  border-radius: 10px;
+
+  transition: 0.2s;
+}
+
+.user-card:hover {
+  border-color: #93c5fd;
+  box-shadow: 0 3px 10px
+    rgba(0, 0, 0, 0.06);
+}
+
+/* =========================
+   AVATAR
+========================= */
+
+.user-avatar {
+  width: 42px;
+  height: 42px;
+
+  border-radius: 50%;
+
+  background: linear-gradient(135deg, #06b6d4, #4f46e5);
+  color: white;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 17px;
+  font-weight: 600;
+
+  margin-right: 13px;
+}
+
+/* =========================
+   USER INFO
+========================= */
+
+.user-info {
+  flex: 1;
+}
+
+.user-name {
+  display: flex;
+  align-items: center;
+
+  gap: 7px;
+
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.you-label {
+  font-size: 10px;
+
+  padding: 2px 6px;
+
+  border-radius: 4px;
+
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.user-role {
+  margin-top: 4px;
+
+  color: #64748b;
+
+  font-size: 12px;
+}
+
+/* =========================
+   STATUS
+========================= */
+
+.user-status {
+  display: flex;
+  align-items: center;
+
+  gap: 6px;
+
+  font-size: 12px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+
+  border-radius: 50%;
+}
+
+.user-status.online {
+  color: #16a34a;
+}
+
+.user-status.online .status-dot {
+  background: #22c55e;
+}
+
+.user-status.offline {
+  color: #94a3b8;
+}
+
+.user-status.offline .status-dot {
+  background: #94a3b8;
+}

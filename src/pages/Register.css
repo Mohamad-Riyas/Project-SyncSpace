@@ -1,0 +1,277 @@
+/* ================================
+   REGISTER PAGE
+================================ */
+
+.register-page {
+  min-height: 100vh;
+  width: 100%;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background: #121416;
+
+  padding: 40px 20px;
+}
+
+
+/* ================================
+   MAIN CONTAINER
+================================ */
+
+.register-container {
+  width: 100%;
+  max-width: 420px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+
+/* ================================
+   SYNCSPACE BRAND
+================================ */
+
+.register-brand {
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.register-logo {
+  width: 55px;
+  height: 55px;
+
+  margin: 0 auto 11px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  border-radius: 14px;
+
+  background: linear-gradient(
+    135deg,
+    #4f8cff,
+    #705cff
+  );
+
+  color: white;
+
+  font-size: 27px;
+  font-weight: 800;
+
+  box-shadow:
+    0 8px 25px rgba(79, 140, 255, 0.25);
+}
+
+.register-brand h1 {
+  color: white;
+
+  font-size: 31px;
+  font-weight: 700;
+
+  letter-spacing: 1px;
+}
+
+.register-brand p {
+  margin-top: 6px;
+
+  color: #7f858e;
+
+  font-size: 13px;
+}
+
+
+/* ================================
+   REGISTER CARD
+================================ */
+
+.register-card {
+  width: 100%;
+
+  padding: 34px 36px;
+
+  background: #1b1e22;
+
+  border: 1px solid #2d3238;
+
+  border-radius: 16px;
+
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.4);
+}
+
+
+/* ================================
+   HEADING
+================================ */
+
+.register-card h2 {
+  text-align: center;
+
+  color: white;
+
+  font-size: 25px;
+}
+
+.register-subtitle {
+  text-align: center;
+
+  color: #858b94;
+
+  font-size: 14px;
+
+  margin-top: 8px;
+  margin-bottom: 25px;
+}
+
+
+/* ================================
+   INPUTS
+================================ */
+
+.register-input-group {
+  width: 100%;
+
+  margin-bottom: 17px;
+}
+
+.register-input-group label {
+  display: block;
+
+  color: #d8dbe0;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  margin-bottom: 7px;
+}
+
+.register-input-group input {
+  width: 100%;
+
+  padding: 12px 14px;
+
+  background: #111315;
+
+  border: 1px solid #343941;
+
+  border-radius: 8px;
+
+  color: white;
+
+  font-size: 14px;
+
+  outline: none;
+
+  transition: 0.2s;
+}
+
+.register-input-group input::placeholder {
+  color: #626872;
+}
+
+.register-input-group input:focus {
+  border-color: #4f8cff;
+
+  box-shadow:
+    0 0 0 3px rgba(79, 140, 255, 0.12);
+}
+
+
+/* ================================
+   REGISTER BUTTON
+================================ */
+
+.register-button {
+  width: 100%;
+
+  padding: 13px;
+
+  margin-top: 5px;
+
+  border: none;
+
+  border-radius: 8px;
+
+  background: linear-gradient(
+    135deg,
+    #4f8cff,
+    #705cff
+  );
+
+  color: white;
+
+  font-size: 15px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.register-button:hover {
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 8px 22px rgba(79, 140, 255, 0.25);
+}
+
+
+/* ================================
+   LOGIN LINK
+================================ */
+
+.login-link {
+  text-align: center;
+
+  margin-top: 23px;
+
+  color: #858b94;
+
+  font-size: 14px;
+}
+
+.login-link a {
+  color: #6f9cff;
+
+  font-weight: 600;
+
+  text-decoration: none;
+}
+
+.login-link a:hover {
+  text-decoration: underline;
+}
+
+
+/* ================================
+   FOOTER
+================================ */
+
+.register-footer {
+  margin-top: 20px;
+
+  color: #555b63;
+
+  font-size: 12px;
+}
+
+
+/* ================================
+   MOBILE
+================================ */
+
+@media (max-width: 500px) {
+
+  .register-card {
+    padding: 28px 22px;
+  }
+
+  .register-brand h1 {
+    font-size: 28px;
+  }
+
+}

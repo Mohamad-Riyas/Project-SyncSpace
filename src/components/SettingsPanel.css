@@ -1,16 +1,174 @@
 .settings-panel {
-	height: 100%;
-	padding: 32px;
-	background: #09101d;
-	color: #e2e8f0;
+  width: 100%;
+  height: 100%;
+
+  box-sizing: border-box;
+
+  padding: 25px;
+
+  background: #f8fafc;
+
+  color: #111827;
+
+  overflow-y: auto;
 }
 
-.settings-heading h2 { margin: 0; font-size: 22px; }
-.settings-heading p, .settings-note { color: #64748b; font-size: 13px; }
-.setting-control { display: block; max-width: 620px; margin: 28px 0; padding: 18px; border: 1px solid #26364d; border-radius: 12px; background: #0f1a2c; }
-.setting-control span { display: flex; justify-content: space-between; gap: 16px; }
-.setting-control small { color: #67e8f9; }
-.setting-control-disabled { display: flex; flex-direction: column; gap: 8px; }
-.setting-control-disabled small { color: #64748b; }
-.setting-control input { width: 100%; margin-top: 18px; accent-color: #06b6d4; }
-.download-project-btn { border: 1px solid rgba(34, 211, 238, .45); border-radius: 8px; background: rgba(6, 182, 212, .16); color: #67e8f9; padding: 11px 16px; cursor: pointer; font-weight: 700; }
+/* HEADER */
+
+.settings-header {
+  padding-bottom: 18px;
+
+  margin-bottom: 20px;
+
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.settings-header h2 {
+  margin: 0;
+
+  font-size: 22px;
+  font-weight: 600;
+
+  color: #1e293b;
+}
+
+.settings-header p {
+  margin: 5px 0 0;
+
+  font-size: 13px;
+
+  color: #64748b;
+}
+
+/* SECTION */
+
+.settings-section {
+  margin-bottom: 25px;
+
+  padding: 18px;
+
+  background: white;
+
+  border: 1px solid #e2e8f0;
+
+  border-radius: 10px;
+}
+
+.settings-section h3 {
+  margin: 0 0 15px;
+
+  font-size: 15px;
+
+  color: #334155;
+}
+
+/* SETTING ITEM */
+
+.setting-item {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 14px 0;
+
+  border-top: 1px solid #f1f5f9;
+}
+
+.setting-text {
+  display: flex;
+  flex-direction: column;
+
+  gap: 4px;
+}
+
+.setting-text strong,
+.setting-row strong {
+  font-size: 14px;
+
+  color: #1e293b;
+}
+
+.setting-text span,
+.setting-row span {
+  font-size: 12px;
+
+  color: #94a3b8;
+}
+
+/* TOGGLE */
+
+.toggle {
+  position: relative;
+
+  width: 42px;
+  height: 23px;
+
+  border: none;
+
+  border-radius: 20px;
+
+  background: #cbd5e1;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.toggle span {
+  position: absolute;
+
+  top: 3px;
+  left: 3px;
+
+  width: 17px;
+  height: 17px;
+
+  border-radius: 50%;
+
+  background: white;
+
+  transition: 0.2s;
+}
+
+.toggle.active {
+  background: #2563eb;
+}
+
+.toggle.active span {
+  left: 22px;
+}
+
+/* EDITOR ROW */
+
+.setting-row {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  padding-top: 14px;
+
+  border-top: 1px solid #f1f5f9;
+}
+
+.setting-row div {
+  display: flex;
+  flex-direction: column;
+
+  gap: 4px;
+}
+
+.setting-row select {
+  padding: 7px 10px;
+
+  border: 1px solid #cbd5e1;
+
+  border-radius: 6px;
+
+  background: white;
+
+  color: #334155;
+
+  cursor: pointer;
+}

@@ -1,0 +1,93 @@
+.whiteboard-toolbar {
+  height: 48px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 6px;
+
+  padding: 6px 10px;
+
+  background: #0f1a2c;
+
+  border-bottom: 1px solid #26364d;
+
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+
+  position: relative;
+  z-index: 10;
+}
+
+.toolbar-btn {
+  width: 34px;
+  height: 34px;
+
+  border: none;
+  border-radius: 6px;
+
+  background: transparent;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 18px;
+  color: #cbd5e1;
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+.toolbar-btn:hover {
+  background: #1e293b;
+}
+
+.toolbar-btn.active {
+  background: rgba(6, 182, 212, .2);
+  color: #67e8f9;
+}
+
+.toolbar-divider {
+  width: 1px;
+  height: 26px;
+
+  background: #334155;
+
+  margin: 0 6px;
+}
+
+.clear-btn {
+  height: 34px;
+
+  padding: 0 12px;
+
+  border: none;
+  border-radius: 6px;
+
+  background: rgba(239, 68, 68, .14);
+  color: #fda4af;
+
+  font-size: 13px;
+
+  cursor: pointer;
+}
+
+.clear-btn:hover {
+  background: #fecaca;
+}
+
+.save-btn {
+  height: 34px;
+  padding: 0 14px;
+  border: 1px solid rgba(34, 211, 238, 0.45);
+  border-radius: 6px;
+  background: rgba(6, 182, 212, 0.16);
+  color: #67e8f9;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.save-btn:hover {
+  background: rgba(6, 182, 212, 0.28);
+}

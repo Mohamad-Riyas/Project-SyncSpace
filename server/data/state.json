@@ -1,0 +1,263 @@
+{
+  "workspaces": [
+    {
+      "name": "ABCD",
+      "description": "Real-time electric collaborative workspace session.",
+      "type": "Code + Whiteboard",
+      "code": "SYNC-7274",
+      "owner": "Riyas",
+      "tags": [
+        "Code-Whiteboard"
+      ],
+      "id": 1788985762706,
+      "collaborators": 1,
+      "lastUpdated": "Just now",
+      "status": "Active"
+    }
+  ],
+  "activities": [
+    {
+      "id": 1788986407373,
+      "message": "You updated ABCD",
+      "user": "Riyas",
+      "time": "Just now",
+      "type": "edit",
+      "workspaceName": "ABCD"
+    },
+    {
+      "id": 1788985961399,
+      "message": "You updated ABCD",
+      "user": "Riyas",
+      "time": "Just now",
+      "type": "edit",
+      "workspaceName": "ABCD"
+    },
+    {
+      "id": 1788985843662,
+      "message": "You updated ABCD",
+      "user": "Riyas",
+      "time": "Just now",
+      "type": "edit",
+      "workspaceName": "ABCD"
+    },
+    {
+      "id": 1788985762706,
+      "message": "You created ABCD",
+      "user": "Riyas",
+      "time": "Just now",
+      "type": "create",
+      "workspaceName": "ABCD"
+    }
+  ],
+  "sessions": [],
+  "documents": {
+    "1788985762706": {
+      "whiteboard": [],
+      "updatedAt": "2026-09-09T20:47:28.676Z",
+      "whiteboardState": {
+        "rectangles": [],
+        "circles": [],
+        "lines": [],
+        "freehandLines": [],
+        "texts": []
+      },
+      "files": [
+        {
+          "name": "index.js",
+          "language": "javascript",
+          "code": "function hello() {\n  console.log(\"Hello SyncSpace!\");\n}fe"
+        },
+        {
+          "name": "script.py",
+          "language": "python",
+          "code": "def hello():\n    print(\"Hello SyncSpace!  \")\n\nhello()"
+        }
+      ]
+    }
+  },
+  "history": {
+    "1788985762706": [
+      {
+        "action": "Downloaded the workspace project",
+        "source": "workspace",
+        "id": "1788985762706-1788986867598",
+        "createdAt": "2026-09-09T20:47:47.598Z"
+      },
+      {
+        "action": "Ran index.js",
+        "source": "code",
+        "id": "1788985762706-1788986850837",
+        "createdAt": "2026-09-09T20:47:30.837Z"
+      },
+      {
+        "action": "Saved the whiteboard",
+        "source": "whiteboard",
+        "id": "1788985762706-1788986848676",
+        "createdAt": "2026-09-09T20:47:28.676Z"
+      },
+      {
+        "action": "Ran index.js",
+        "source": "code",
+        "id": "1788985762706-1788986843436",
+        "createdAt": "2026-09-09T20:47:23.436Z"
+      },
+      {
+        "action": "Ran riyas.py",
+        "source": "code",
+        "id": "1788985762706-1788986830196",
+        "createdAt": "2026-09-09T20:47:10.196Z"
+      },
+      {
+        "action": "Updated the whiteboard",
+        "source": "whiteboard",
+        "id": "1788985762706-1788986611390",
+        "createdAt": "2026-09-09T20:43:31.390Z"
+      },
+      {
+        "action": "Updated the whiteboard",
+        "source": "whiteboard",
+        "id": "1788985762706-1788986605310",
+        "createdAt": "2026-09-09T20:43:25.310Z"
+      },
+      {
+        "action": "Updated the whiteboard",
+        "source": "whiteboard",
+        "id": "1788985762706-1788986599439",
+        "createdAt": "2026-09-09T20:43:19.439Z"
+      },
+      {
+        "action": "Updated the whiteboard",
+        "source": "whiteboard",
+        "id": "1788985762706-1788986595294",
+        "createdAt": "2026-09-09T20:43:15.294Z"
+      },
+      {
+        "action": "Updated the whiteboard",
+        "source": "whiteboard",
+        "id": "1788985762706-1788986534110",
+        "createdAt": "2026-09-09T20:42:14.110Z"
+      },
+      {
+        "action": "Updated the whiteboard",
+        "source": "whiteboard",
+        "id": "1788985762706-1788986430194",
+        "createdAt": "2026-09-09T20:40:30.194Z"
+      },
+      {
+        "action": "Updated the whiteboard",
+        "source": "whiteboard",
+        "id": "1788985762706-1788986420962",
+        "createdAt": "2026-09-09T20:40:20.962Z"
+      },
+      {
+        "action": "Edited index.js",
+        "source": "code",
+        "id": "1788985762706-1788986063810",
+        "createdAt": "2026-09-09T20:34:23.810Z"
+      },
+      {
+        "action": "Edited index.js",
+        "source": "code",
+        "id": "1788985762706-1788986062289",
+        "createdAt": "2026-09-09T20:34:22.289Z"
+      },
+      {
+        "action": "Edited index.js",
+        "source": "code",
+        "id": "1788985762706-1788986060354",
+        "createdAt": "2026-09-09T20:34:20.354Z"
+      },
+      {
+        "action": "Edited index.js",
+        "source": "code",
+        "id": "1788985762706-1788986058467",
+        "createdAt": "2026-09-09T20:34:18.467Z"
+      },
+      {
+        "action": "Edited index.js",
+        "source": "code",
+        "id": "1788985762706-1788986057158",
+        "createdAt": "2026-09-09T20:34:17.158Z"
+      },
+      {
+        "action": "Edited index.js",
+        "source": "code",
+        "id": "1788985762706-1788986057107",
+        "createdAt": "2026-09-09T20:34:17.107Z"
+      },
+      {
+        "action": "Edited index.js",
+        "source": "code",
+        "id": "1788985762706-1788986053330",
+        "createdAt": "2026-09-09T20:34:13.330Z"
+      },
+      {
+        "action": "Edited script.py",
+        "source": "code",
+        "id": "1788985762706-1788985980042",
+        "createdAt": "2026-09-09T20:33:00.042Z"
+      },
+      {
+        "action": "Edited script.py",
+        "source": "code",
+        "id": "1788985762706-1788985974378",
+        "createdAt": "2026-09-09T20:32:54.378Z"
+      },
+      {
+        "action": "Updated the whiteboard",
+        "source": "whiteboard",
+        "id": "1788985762706-1788985880772",
+        "createdAt": "2026-09-09T20:31:20.772Z"
+      },
+      {
+        "action": "Updated the whiteboard",
+        "source": "whiteboard",
+        "id": "1788985762706-1788985874636",
+        "createdAt": "2026-09-09T20:31:14.636Z"
+      },
+      {
+        "action": "Updated the whiteboard",
+        "source": "whiteboard",
+        "id": "1788985762706-1788985868324",
+        "createdAt": "2026-09-09T20:31:08.324Z"
+      },
+      {
+        "action": "Updated the whiteboard",
+        "source": "whiteboard",
+        "id": "1788985762706-1788985857651",
+        "createdAt": "2026-09-09T20:30:57.651Z"
+      },
+      {
+        "action": "Updated the whiteboard",
+        "source": "whiteboard",
+        "id": "1788985762706-1788985854579",
+        "createdAt": "2026-09-09T20:30:54.579Z"
+      },
+      {
+        "action": "Updated the whiteboard",
+        "source": "whiteboard",
+        "id": "1788985762706-1788985847979",
+        "createdAt": "2026-09-09T20:30:47.979Z"
+      },
+      {
+        "action": "Updated the whiteboard",
+        "source": "whiteboard",
+        "id": "1788985762706-1788985777937",
+        "createdAt": "2026-09-09T20:29:37.937Z"
+      },
+      {
+        "action": "Updated the whiteboard",
+        "source": "whiteboard",
+        "id": "1788985762706-1788985774129",
+        "createdAt": "2026-09-09T20:29:34.129Z"
+      },
+      {
+        "action": "Updated the whiteboard",
+        "source": "whiteboard",
+        "id": "1788985762706-1788985766690",
+        "createdAt": "2026-09-09T20:29:26.690Z"
+      }
+    ]
+  },
+  "preferences": {}
+}

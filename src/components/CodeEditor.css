@@ -1,0 +1,220 @@
+.editor-container {
+  flex: 1;
+  min-height: 0;
+  background: #1e1e1e;
+  color: white;
+
+  display: flex;
+  flex-direction: column;
+}
+
+/* =========================
+   FILE TABS
+========================= */
+
+.editor-tabs {
+  height: 38px;
+  flex-shrink: 0;
+
+  background: #181818;
+
+  display: flex;
+  align-items: stretch;
+
+  border-bottom: 1px solid #333333;
+}
+
+.editor-tab {
+  border: none;
+
+  padding: 0 18px;
+
+  background: #181818;
+  color: #888888;
+
+  font-size: 13px;
+
+  cursor: pointer;
+
+  border-right: 1px solid #333333;
+}
+
+.editor-tab:hover {
+  background: #222222;
+  color: #ffffff;
+}
+
+.editor-tab.active {
+  background: #1e1e1e;
+  color: #ffffff;
+
+  border-top: 2px solid #3b82f6;
+}
+
+/* =========================
+   MONACO EDITOR
+========================= */
+
+.editor-main {
+  flex: 1;
+  min-height: 0;
+
+  width: 100%;
+}
+
+/* =========================
+   RUN BAR
+========================= */
+
+.editor-run-bar {
+  height: 45px;
+  flex-shrink: 0;
+
+  background: #181818;
+
+  border-top: 1px solid #333333;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0 12px;
+}
+
+.language-name {
+  color: #94a3b8;
+
+  font-size: 13px;
+
+  text-transform: capitalize;
+}
+
+.run-button {
+  border: none;
+
+  background: #22c55e;
+  color: white;
+
+  padding: 7px 16px;
+
+  border-radius: 6px;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.run-button:hover {
+  background: #16a34a;
+}
+
+/* =========================
+   OUTPUT
+========================= */
+
+.editor-output {
+  height: 120px;
+  flex-shrink: 0;
+
+  background: #111111;
+
+  border-top: 1px solid #333333;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.output-header {
+  height: 32px;
+
+  display: flex;
+  align-items: center;
+
+  padding: 0 12px;
+
+  color: #94a3b8;
+
+  font-size: 12px;
+  font-weight: 600;
+
+  border-bottom: 1px solid #333333;
+}
+
+.output-content {
+  flex: 1;
+
+  margin: 0;
+
+  padding: 10px 12px;
+
+  color: #d1d5db;
+
+  font-family: Consolas, monospace;
+
+  font-size: 13px;
+
+  white-space: pre-wrap;
+
+  overflow-y: auto;
+}
+
+.editor-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.save-button {
+  border: 1px solid rgba(34, 211, 238, 0.45);
+  background: rgba(6, 182, 212, 0.16);
+  color: #67e8f9;
+  padding: 7px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.save-button:hover {
+  background: rgba(6, 182, 212, 0.28);
+}
+
+.editor-explorer-bar {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 10px;
+  background: #121a28;
+  border-bottom: 1px solid #26364d;
+}
+
+.explorer-title {
+  color: #cbd5e1;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.explorer-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.explorer-button {
+  border: 1px solid #334155;
+  border-radius: 5px;
+  background: #1e293b;
+  color: #bae6fd;
+  padding: 5px 9px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.explorer-button:hover {
+  border-color: #22d3ee;
+  background: #164e63;
+}

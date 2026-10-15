@@ -1,0 +1,343 @@
+/* ================================
+   REGISTER PAGE
+================================ */
+
+.register-page {
+  min-height: 100vh;
+  width: 100%;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background: #121416;
+
+  padding: 40px 20px;
+}
+
+[data-theme="light"] .register-page {
+  background: radial-gradient(ellipse at top right, rgba(231, 102, 67, .08), transparent 40%), #f3f7f5;
+}
+[data-theme="light"] .register-button { background: linear-gradient(120deg, #148b82, #16776f); }
+[data-theme="light"] .register-button:hover { box-shadow: 0 8px 22px rgba(20, 139, 130, .2); }
+[data-theme="light"] .login-link a { color: #147f77; }
+[data-theme="light"] .register-logo { display: block; width: 190px; height: 148px; margin: 0 auto 11px; background: transparent; box-shadow: none; object-fit: contain; }
+[data-theme="light"] .register-brand h1,
+[data-theme="light"] .register-card h2 { color: #203238; }
+[data-theme="light"] .register-brand p,
+[data-theme="light"] .register-subtitle { color: #687a7b; }
+[data-theme="light"] .register-card { background: white; border-color: #dce6e2; box-shadow: 0 18px 48px rgba(31, 63, 60, .09); }
+[data-theme="light"] .register-input-group label { color: #405355; }
+[data-theme="light"] .register-input-group input,
+[data-theme="light"] .register-input-group select { background: #f8faf9; border-color: #d7e2de; color: #203238; }
+[data-theme="light"] .register-input-group input:focus,
+[data-theme="light"] .register-input-group select:focus { border-color: #71b9ae; box-shadow: 0 0 0 3px rgba(20, 139, 130, .11); }
+[data-theme="light"] .register-footer { color: #81908f; }
+[data-theme="light"] .password-toggle { color: #627371; }
+
+
+/* ================================
+   MAIN CONTAINER
+================================ */
+
+.register-container {
+  width: 100%;
+  max-width: 420px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+
+/* ================================
+   SYNCSPACE BRAND
+================================ */
+
+.register-brand {
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.register-logo {
+  width: 55px;
+  height: 55px;
+
+  margin: 0 auto 11px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  border-radius: 14px;
+
+  background: linear-gradient(
+    135deg,
+    #4f8cff,
+    #705cff
+  );
+
+  color: white;
+
+  font-size: 27px;
+  font-weight: 800;
+
+  box-shadow:
+    0 8px 25px rgba(79, 140, 255, 0.25);
+}
+
+.register-brand h1 {
+  color: white;
+
+  font-size: 31px;
+  font-weight: 700;
+
+  letter-spacing: 1px;
+}
+
+.register-brand p {
+  margin-top: 6px;
+
+  color: #7f858e;
+
+  font-size: 13px;
+}
+
+
+/* ================================
+   REGISTER CARD
+================================ */
+
+.register-card {
+  width: 100%;
+
+  padding: 34px 36px;
+
+  background: #1b1e22;
+
+  border: 1px solid #2d3238;
+
+  border-radius: 16px;
+
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.4);
+}
+
+
+/* ================================
+   HEADING
+================================ */
+
+.register-card h2 {
+  text-align: center;
+
+  color: white;
+
+  font-size: 25px;
+}
+
+.register-subtitle {
+  text-align: center;
+
+  color: #858b94;
+
+  font-size: 14px;
+
+  margin-top: 8px;
+  margin-bottom: 25px;
+}
+
+
+/* ================================
+   INPUTS
+================================ */
+
+.register-input-group {
+  width: 100%;
+
+  margin-bottom: 17px;
+}
+
+.register-input-group label {
+  display: block;
+
+  color: #d8dbe0;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  margin-bottom: 7px;
+}
+
+.register-input-group input {
+  width: 100%;
+
+  padding: 12px 14px;
+
+  background: #111315;
+
+  border: 1px solid #343941;
+
+  border-radius: 8px;
+
+  color: white;
+
+  font-size: 14px;
+
+  outline: none;
+
+  transition: 0.2s;
+}
+
+.register-input-group input::placeholder {
+  color: #626872;
+}
+
+.register-input-group input:focus {
+  border-color: #4f8cff;
+
+  box-shadow:
+    0 0 0 3px rgba(79, 140, 255, 0.12);
+}
+
+
+/* ================================
+   REGISTER BUTTON
+================================ */
+
+.register-button {
+  width: 100%;
+
+  padding: 13px;
+
+  margin-top: 5px;
+
+  border: none;
+
+  border-radius: 8px;
+
+  background: linear-gradient(
+    135deg,
+    #4f8cff,
+    #705cff
+  );
+
+  color: white;
+
+  font-size: 15px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.register-button:hover {
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 8px 22px rgba(79, 140, 255, 0.25);
+}
+
+
+/* ================================
+   LOGIN LINK
+================================ */
+
+.login-link {
+  text-align: center;
+
+  margin-top: 23px;
+
+  color: #858b94;
+
+  font-size: 14px;
+}
+
+.login-link a {
+  color: #6f9cff;
+
+  font-weight: 600;
+
+  text-decoration: none;
+}
+
+.login-link a:hover {
+  text-decoration: underline;
+}
+
+
+/* ================================
+   FOOTER
+================================ */
+
+.register-footer {
+  margin-top: 20px;
+
+  color: #555b63;
+
+  font-size: 12px;
+}
+
+
+/* ================================
+   MOBILE
+================================ */
+
+@media (max-width: 500px) {
+
+  .register-card {
+    padding: 28px 22px;
+  }
+
+  .register-brand h1 {
+    font-size: 28px;
+  }
+
+}
+/* --- Auth alert / password toggle / field hint (added) --- */
+.auth-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+.password-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.password-field input {
+  width: 100%;
+  padding-right: 40px;
+}
+.password-toggle {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 4px;
+}
+.password-toggle:hover {
+  color: #334155;
+}
+.field-hint {
+  display: block;
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 4px;
+}
+.register-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}

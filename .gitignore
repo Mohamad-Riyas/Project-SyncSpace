@@ -1,0 +1,19 @@
+# Environment secrets
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# Dependencies and generated output
+node_modules/
+**/node_modules/
+**/dist/
+**/build/
+*.log
+npm-debug.log*
+
+# Local user data
+backend/server/uploads/recordings/*
+!backend/server/uploads/recordings/.gitkeep

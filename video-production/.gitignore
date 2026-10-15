@@ -1,0 +1,6 @@
+.venv/
+*.log
+*.err
+output/
+footage/
+demo_config.json

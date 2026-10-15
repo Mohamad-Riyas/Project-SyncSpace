@@ -42,7 +42,7 @@ A real-time collaborative workspace that combines a **shared whiteboard** and a 
 
 ## Prerequisites
 
-- Node.js 18+ and npm
+- Node.js 20.19+ (or 22.12+) and npm
 - A MongoDB instance (local or MongoDB Atlas)
 - (Optional) JDoodle, SMTP and Google OAuth credentials
 

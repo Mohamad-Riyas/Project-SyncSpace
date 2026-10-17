@@ -10,7 +10,7 @@ function YjsTest() {
 
   useEffect(() => {
     const ydoc = new Y.Doc();
-    const provider = new SocketIOProvider("http://localhost:5001", "yjs-test-room", ydoc, {
+    const provider = new SocketIOProvider(import.meta.env.VITE_SOCKET_URL || "http://localhost:5000", "yjs-test-room", ydoc, {
       autoConnect: true,
     });
     const ytext = ydoc.getText("shared-text");

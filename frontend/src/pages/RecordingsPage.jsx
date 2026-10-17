@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react';
-import { Loader2, Play, Square, Video } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Loader2, Play, Square, Video, Share2, Check } from 'lucide-react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { recordingsApi } from '../api/client';
 import { Button } from '../components/ui/Button';
+import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
 function formatDuration(seconds) {
   const total = Math.max(0, Math.round(seconds || 0));
@@ -14,10 +16,14 @@ export default function RecordingsPage() {
   const [loading, setLoading] = useState(true);
   const [playingId, setPlayingId] = useState(null);
   const [urls, setUrls] = useState({});
+  const urlsRef = useRef({});
+  const [sharingId, setSharingId] = useState(null);
+  const { role } = useAuth();
+  const { showToast } = useToast();
 
   useEffect(() => {
     recordingsApi.list().then((data) => setRecordings(data.recordings || [])).finally(() => setLoading(false));
-    return () => Object.values(urls).forEach((url) => URL.revokeObjectURL(url));
+    return () => Object.values(urlsRef.current).forEach((url) => URL.revokeObjectURL(url));
   }, []);
 
   const play = async (id) => {
@@ -27,10 +33,26 @@ export default function RecordingsPage() {
     }
     try {
       const url = urls[id] || await recordingsApi.stream(id);
-      if (!urls[id]) setUrls((prev) => ({ ...prev, [id]: url }));
+      if (!urls[id]) {
+        urlsRef.current[id] = url;
+        setUrls((prev) => ({ ...prev, [id]: url }));
+      }
       setPlayingId(id);
     } catch (err) {
       alert(err.message || 'Could not load recording');
+    }
+  };
+
+  const shareRecording = async (id) => {
+    setSharingId(id);
+    try {
+      const { recording: updated } = await recordingsApi.share(id);
+      setRecordings((current) => current.map((item) => item.id === updated.id ? { ...item, shared: updated.shared } : item));
+      showToast('Recording shared with interview candidates', 'success');
+    } catch (err) {
+      showToast(err.message || 'Could not share recording', 'error');
+    } finally {
+      setSharingId(null);
     }
   };
 
@@ -42,7 +64,7 @@ export default function RecordingsPage() {
         </div>
         <div>
           <h1 className="text-2xl font-bold">Interview Recordings</h1>
-          <p className="text-sm text-slate-500">Saved interview meeting audio available to authorized interviewers and admins.</p>
+          <p className="text-sm text-slate-500">Video recordings include the shared screen, active cameras, and meeting audio.</p>
         </div>
       </div>
 
@@ -59,12 +81,21 @@ export default function RecordingsPage() {
                     Recorded by {recording.startedBy || 'Interviewer'} · {new Date(recording.createdAt).toLocaleString()} · {formatDuration(recording.durationSeconds)}
                   </p>
                 </div>
-                <Button variant="outline" size="sm" icon={playingId === recording.id ? <Square className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />} onClick={() => play(recording.id)}>
-                  {playingId === recording.id ? 'Stop' : 'Play'}
-                </Button>
+                <div className="flex gap-2">
+                  {['admin', 'interviewer'].includes(role) && (
+                    <Button variant="outline" size="sm" icon={recording.shared ? <Check className="w-3.5 h-3.5" /> : <Share2 className="w-3.5 h-3.5" />} onClick={() => shareRecording(recording.id)} disabled={recording.shared || sharingId === recording.id}>
+                      {sharingId === recording.id ? 'Sharing…' : recording.shared ? 'Shared' : 'Share with candidates'}
+                    </Button>
+                  )}
+                  <Button variant="outline" size="sm" icon={playingId === recording.id ? <Square className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />} onClick={() => play(recording.id)}>
+                    {playingId === recording.id ? 'Stop' : 'Play'}
+                  </Button>
+                </div>
               </div>
               {playingId === recording.id && urls[recording.id] && (
-                <audio className="w-full mt-4" controls autoPlay src={urls[recording.id]} />
+                recording.mimeType?.startsWith('video/') ? (
+                  <video className="w-full mt-4 max-h-[70vh] rounded-xl bg-black" controls autoPlay playsInline src={urls[recording.id]} />
+                ) : <audio className="w-full mt-4" controls autoPlay src={urls[recording.id]} />
               )}
             </div>
           ))}

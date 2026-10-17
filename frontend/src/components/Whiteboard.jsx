@@ -36,7 +36,7 @@ function Whiteboard({ workspaceId, roomId, onActivity }) {
 
   useEffect(() => {
     const ydoc = new Y.Doc();
-    const provider = new SocketIOProvider("http://localhost:5001", `whiteboard-${roomId || workspaceId || "default"}`, ydoc, { autoConnect: true });
+    const provider = new SocketIOProvider(import.meta.env.VITE_SOCKET_URL || "http://localhost:5000", `whiteboard-${roomId || workspaceId || "default"}`, ydoc, { autoConnect: true });
     const yShapes = ydoc.getArray("shapes");
     ydocRef.current = ydoc;
     providerRef.current = provider;
@@ -90,7 +90,7 @@ function Whiteboard({ workspaceId, roomId, onActivity }) {
       ydoc.destroy();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [workspaceId]);
+  }, [roomId, workspaceId]);
 
   const pushShapeToYjs = (type, shape) => yShapesRef.current?.push([{ ...shape, type }]);
 

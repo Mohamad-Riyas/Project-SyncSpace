@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Code2, Palette, Share2, Copy, Check, Award, GripVertical } from 'lucide-react';
+import { ArrowLeft, Code2, Palette, Share2, Copy, Check, Award, GripVertical, Mic, MicOff, UserPlus, X } from 'lucide-react';
 import { getWorkspaceStore, saveWorkspaceHistory } from '../../../data/workspaceStore';
 import { isInterviewWorkspace } from '../../../types/workspace';
 import { InterviewStatus } from '../types/interview.types';
@@ -17,10 +17,27 @@ import { InterviewSetup } from './InterviewSetup';
 import { useToast } from '../../../context/ToastContext';
 import { useAuth } from '../../../context/AuthContext';
 import { interviewsApi } from '../../../api/client';
+import { getSocket } from '../../../services/socket';
 import { Button } from '../../../components/ui/Button';
 import '../styles/InterviewWorkspace.css';
 
 const MONGO_ID_RE = /^[a-f0-9]{24}$/i;
+
+function VideoTile({ stream, label, muted = false }) {
+  const videoRef = useRef(null);
+  useEffect(() => {
+    if (videoRef.current) videoRef.current.srcObject = stream;
+    return () => {
+      if (videoRef.current) videoRef.current.srcObject = null;
+    };
+  }, [stream]);
+  return (
+    <div className="relative aspect-video w-48 overflow-hidden rounded-xl border border-slate-700 bg-slate-900">
+      <video ref={videoRef} autoPlay playsInline muted={muted} className="h-full w-full object-cover" />
+      <span className="absolute bottom-2 left-2 rounded-md bg-black/60 px-2 py-1 text-[11px] text-white">{label}</span>
+    </div>
+  );
+}
 
 export function InterviewWorkspacePage() {
   const { id = '' } = useParams();
@@ -31,30 +48,75 @@ export function InterviewWorkspacePage() {
   const workspaceId = Number(id) || id;
   const [activeTool, setActiveTool] = useState('split');
   const [backendInterview, setBackendInterview] = useState(null);
+  const [interviewLoadState, setInterviewLoadState] = useState({ id: null, error: '' });
+  const [availableInterviews, setAvailableInterviews] = useState([]);
+  const [candidateManagerOpen, setCandidateManagerOpen] = useState(false);
+  const [candidateEmailInput, setCandidateEmailInput] = useState('');
+  const [candidateBusy, setCandidateBusy] = useState(false);
   const [copied, setCopied] = useState(false);
   const [score, setScore] = useState('');
   const [scoreFeedback, setScoreFeedback] = useState('');
   const [savingScore, setSavingScore] = useState(false);
   const [splitRatio, setSplitRatio] = useState(50);
+  const [recordingAnnouncement, setRecordingAnnouncement] = useState(false);
   const stageRef = useRef(null);
   const resizingRef = useRef(false);
 
   const isBackendInterview = MONGO_ID_RE.test(String(id));
+  const interviewLoading = isBackendInterview && interviewLoadState.id !== id;
+  const interviewLoadError = interviewLoadState.id === id ? interviewLoadState.error : '';
 
   useEffect(() => {
     if (!isBackendInterview) return undefined;
     let cancelled = false;
     interviewsApi.getById(id).then(({ interview }) => {
-      if (!cancelled) setBackendInterview(interview);
-    }).catch((err) => showToast(err.message || 'Could not load interview', 'error'));
+      if (!cancelled) {
+        setBackendInterview(interview);
+        setInterviewLoadState({ id, error: '' });
+      }
+    }).catch((err) => {
+      if (!cancelled) setInterviewLoadState({ id, error: err.message || 'Could not load interview' });
+      if (err.status === 404) {
+        interviewsApi.list().then(({ interviews: items = [] }) => {
+          if (!cancelled) setAvailableInterviews(items);
+        }).catch((listError) => {
+          console.error('Could not load accessible interviews after a missing interview link:', listError);
+        });
+      }
+    });
     return () => { cancelled = true; };
-  }, [id, isBackendInterview, showToast]);
+  }, [id, isBackendInterview]);
 
   const interview = useInterview(workspaceId, workspace, backendInterview, authRole);
   const isInterviewer = authRole === 'interviewer' || authRole === 'admin';
   const roomId = backendInterview?.roomId || `workspace-${workspaceId}`;
   const audio = useInterviewAudio(roomId);
   const recording = useInterviewRecording(isBackendInterview ? id : null, audio, isInterviewer);
+
+  useEffect(() => {
+    if (!isBackendInterview || !backendInterview?.id) return undefined;
+    const socket = getSocket();
+    const joinWorkspace = () => socket.emit('join-workspace', id);
+    const onFileUpdated = (file) => {
+      window.dispatchEvent(new CustomEvent('syncspace:file-updated', { detail: file }));
+    };
+    const onFileDeleted = (payload) => {
+      window.dispatchEvent(new CustomEvent('syncspace:file-deleted', { detail: payload }));
+    };
+    const onRecordingStatus = ({ status }) => setRecordingAnnouncement(status === 'recording');
+    if (socket.connected) joinWorkspace();
+    else socket.once('connect', joinWorkspace);
+    socket.on('workspace:file-updated', onFileUpdated);
+    socket.on('workspace:file-deleted', onFileDeleted);
+    socket.on('recording:status', onRecordingStatus);
+    return () => {
+      socket.off('connect', joinWorkspace);
+      socket.off('workspace:file-updated', onFileUpdated);
+      socket.off('workspace:file-deleted', onFileDeleted);
+      socket.off('recording:status', onRecordingStatus);
+      socket.emit('leave-workspace', id);
+    };
+  }, [backendInterview?.id, id, isBackendInterview]);
 
   const remainingSeconds = useMemo(
     () => Math.max(interview.durationMinutes * 60 - interview.elapsedSeconds, 0),
@@ -79,6 +141,33 @@ export function InterviewWorkspacePage() {
       }
     } catch {
       // User cancelled native share.
+    }
+  };
+
+  const addCandidate = async (event) => {
+    event.preventDefault();
+    const email = candidateEmailInput.trim();
+    if (!email || !backendInterview) return;
+    setCandidateBusy(true);
+    try {
+      const { interview: updated } = await interviewsApi.addCandidate(id, email);
+      setBackendInterview(updated);
+      setCandidateEmailInput('');
+      showToast('Candidate invited', 'success');
+    } catch (err) {
+      showToast(err.message || 'Could not add candidate', 'error');
+    } finally {
+      setCandidateBusy(false);
+    }
+  };
+
+  const removeCandidate = async (email) => {
+    try {
+      const { interview: updated } = await interviewsApi.removeCandidateByEmail(id, email);
+      setBackendInterview(updated);
+      showToast('Candidate removed', 'success');
+    } catch (err) {
+      showToast(err.message || 'Could not remove candidate', 'error');
     }
   };
 
@@ -115,13 +204,99 @@ export function InterviewWorkspacePage() {
       try {
         const { interview: fresh } = await interviewsApi.getById(id);
         setBackendInterview(fresh);
-      } catch {}
+      } catch (err) {
+        showToast(err.message || 'Could not refresh the interview details', 'error');
+      }
     }
   };
 
   if (workspace && !isInterviewWorkspace(workspace)) {
     return <Navigate to={`/workspaces/${id}`} replace />;
   }
+
+  if (isBackendInterview && (interviewLoading || interviewLoadError || !backendInterview)) {
+    return (
+      <div className="interview-workspace min-h-screen flex items-center justify-center px-6">
+        <div role={interviewLoadError ? 'alert' : 'status'} className="max-w-lg rounded-2xl border border-slate-800 bg-slate-950 p-6 text-center">
+          <h1 className="text-lg font-semibold text-slate-100">{interviewLoading ? 'Loading interview…' : 'Interview unavailable'}</h1>
+          <p className="mt-2 text-sm text-slate-400">
+            {interviewLoading
+              ? 'Connecting to the interview workspace.'
+              : interviewLoadError || 'The interview details could not be loaded.'}
+          </p>
+          {!interviewLoading && (
+            <p className="mt-2 text-xs text-slate-500">Check that the backend is running and sign in with the interviewer or invited candidate account.</p>
+          )}
+          {!interviewLoading && availableInterviews.length > 0 && (
+            <div className="mt-5 border-t border-slate-800 pt-4 text-left">
+              <p className="mb-2 text-xs font-semibold text-slate-300">This link may be outdated. Choose an interview available to your account:</p>
+              <ul className="space-y-2">
+                {availableInterviews.map((item) => (
+                  <li key={item.id}>
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/interview/${item.id}`)}
+                      className="flex w-full items-center justify-between gap-3 rounded-lg border border-slate-800 bg-slate-900 px-3 py-2 text-left hover:border-cyan-500/40"
+                    >
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm text-slate-100">{item.title}</span>
+                        <span className="block text-xs text-slate-500">{item.status}</span>
+                      </span>
+                      <span className="shrink-0 font-mono text-sm tracking-wider text-cyan-300">{item.code}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <div className="mt-5 flex justify-center gap-2">
+            {!interviewLoading && <Button variant="secondary" onClick={() => window.location.reload()}>Retry</Button>}
+            <Button variant="outline" onClick={() => navigate('/interviews')}>Back to Interviews</Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const candidateManager = isInterviewer && backendInterview && (
+    <section className="mx-4 mt-3 rounded-xl border border-slate-800 bg-slate-950/70 p-4">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-semibold text-slate-200">Manage candidates</h2>
+          <p className="mt-1 text-xs text-slate-500">Invite registered accounts by email. They can join with the six-digit code or notification.</p>
+        </div>
+        <button type="button" aria-label="Close candidate manager" onClick={() => setCandidateManagerOpen(false)} className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white">
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+      <form onSubmit={addCandidate} className="mt-3 flex flex-wrap gap-2">
+        <input
+          type="email"
+          required
+          value={candidateEmailInput}
+          onChange={(event) => setCandidateEmailInput(event.target.value)}
+          placeholder="candidate@example.com"
+          aria-label="Candidate email"
+          className="min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 outline-none focus:border-cyan-500"
+        />
+        <Button type="submit" size="sm" disabled={candidateBusy || !candidateEmailInput.trim()} icon={<UserPlus className="h-4 w-4" />}>
+          {candidateBusy ? 'Adding…' : 'Add candidate'}
+        </Button>
+      </form>
+      {(backendInterview.candidateEmails || []).length > 0 ? (
+        <ul className="mt-3 flex flex-wrap gap-2">
+          {backendInterview.candidateEmails.map((email) => (
+            <li key={email} className="flex items-center gap-2 rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-xs text-slate-300">
+              {email}
+              <button type="button" onClick={() => removeCandidate(email)} aria-label={`Remove ${email}`} className="text-slate-500 hover:text-rose-300">
+                <X className="h-3 w-3" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : <p className="mt-3 text-xs text-slate-500">No candidates invited yet.</p>}
+    </section>
+  );
 
   if (showSetup) {
     return (
@@ -133,10 +308,17 @@ export function InterviewWorkspacePage() {
           <Button variant="outline" size="sm" icon={<Share2 className="w-4 h-4" />} onClick={shareInterview}>
             {copied ? 'Copied' : 'Share Interview'}
           </Button>
+          <Button variant="secondary" size="sm" icon={<UserPlus className="h-4 w-4" />} onClick={() => setCandidateManagerOpen((open) => !open)}>
+            Manage candidates
+          </Button>
         </div>
+        {candidateManagerOpen && candidateManager}
         <InterviewSetup
           workspaceName={backendInterview?.title || `Interview ${id}`}
           defaultCandidate={backendInterview?.candidateInfo?.name || ''}
+          candidateEmails={backendInterview?.candidateEmails || []}
+          showCandidateName={!isBackendInterview}
+          showDuration={!isBackendInterview}
           questionCount={interview.questions.length}
           onStart={async () => {
             try {
@@ -171,6 +353,10 @@ export function InterviewWorkspacePage() {
         onToggleMic={audio.toggleMute}
         micConnectionState={audio.connectionState}
         micError={audio.error}
+        cameraEnabled={audio.cameraEnabled}
+        cameraError={audio.cameraError}
+        onToggleCamera={audio.toggleCamera}
+        onMuteCandidates={audio.muteCandidates}
         recording={recording.recording}
         recordingProcessing={recording.processing}
         onStartRecording={recording.startRecording}
@@ -179,14 +365,41 @@ export function InterviewWorkspacePage() {
       />
 
       <div className="flex items-center justify-end gap-2 px-4 py-2 bg-slate-950 border-b border-slate-800">
-        <span className="text-xs text-slate-500 font-mono">Room: {roomId}</span>
-        {backendInterview?.code && <span className="text-xs text-slate-500">Code: {backendInterview.code}</span>}
+        {backendInterview
+          ? <span className="rounded-md border border-cyan-500/20 bg-cyan-500/5 px-2.5 py-1 text-xs text-cyan-200">Interview code <strong className="ml-1 font-mono tracking-wider">{backendInterview.code}</strong></span>
+          : <span className="text-xs text-slate-500 font-mono">Practice room</span>}
+        {isInterviewer && backendInterview && <Button variant="secondary" size="sm" icon={<UserPlus className="h-3.5 w-3.5" />} onClick={() => setCandidateManagerOpen((open) => !open)}>Manage candidates</Button>}
         <Button variant="outline" size="sm" icon={copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />} onClick={shareInterview}>
           {copied ? 'Copied' : 'Share'}
         </Button>
       </div>
 
       {recording.error && <div className="mx-4 mt-3 px-4 py-2 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs">{recording.error}</div>}
+      {recording.notice && <div role="status" className="mx-4 mt-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-xs text-amber-200">{recording.notice}</div>}
+      {candidateManagerOpen && candidateManager}
+      {recordingAnnouncement && <div role="status" className="mx-4 mt-3 px-4 py-2 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-200 text-xs"><span className="mr-2 inline-block h-2 w-2 rounded-full bg-rose-400 animate-pulse" />This interview is being recorded.</div>}
+      {isInterviewer && audio.remotePeers.length > 0 && (
+        <section aria-label="Interview participants" className="mx-4 mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-slate-800 bg-slate-950/70 px-3 py-2">
+          <span className="mr-1 text-xs font-semibold text-slate-400">Participants</span>
+          {audio.remotePeers.map((peer, index) => (
+            <div key={peer.id} className="flex items-center gap-2 rounded-lg bg-slate-900 px-2.5 py-1.5">
+              <span className="text-xs text-slate-200">Participant {index + 1}</span>
+              <span className="text-[11px] text-slate-500">{peer.muted ? 'Muted' : 'Mic on'}</span>
+              <button type="button" onClick={() => audio.muteCandidate(peer.id)} disabled={peer.muted} className="rounded-md p-1 text-slate-400 hover:bg-rose-500/15 hover:text-rose-300 disabled:cursor-not-allowed disabled:opacity-50" aria-label={peer.muted ? `Participant ${index + 1} is muted` : `Mute participant ${index + 1}`} title={peer.muted ? 'Microphone is muted' : 'Mute participant'}>
+                {peer.muted ? <MicOff className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
+              </button>
+            </div>
+          ))}
+        </section>
+      )}
+      {(audio.localCameraStream || audio.remoteStreams.some(([, stream]) => stream.getVideoTracks().some((track) => track.readyState === 'live'))) && (
+        <div className="flex gap-3 overflow-x-auto px-4 pt-3">
+          {audio.localCameraStream && <VideoTile stream={audio.localCameraStream} label="You" muted />}
+          {audio.remoteStreams.filter(([, stream]) => stream.getVideoTracks().some((track) => track.readyState === 'live')).map(([peerId, stream], index) => (
+            <VideoTile key={peerId} stream={stream} label={`Participant ${index + 1}`} />
+          ))}
+        </div>
+      )}
       {backendInterview?.status === 'ended' && <section className="mx-4 mt-3 p-4 rounded-2xl bg-slate-900/70 border border-slate-800">
         <div className="flex items-center gap-2 mb-3"><Award className="w-4 h-4 text-amber-300" /><h2 className="font-semibold">Interview Result</h2></div>
         {isInterviewer ? <div className="grid md:grid-cols-[140px_1fr_auto] gap-3"><input type="number" min="0" max="100" value={score !== '' ? score : (backendInterview.score ?? '')} onChange={(e) => setScore(e.target.value)} placeholder="Score / 100" className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm" /><input value={scoreFeedback || backendInterview.scoreFeedback || ''} onChange={(e) => setScoreFeedback(e.target.value)} placeholder="Feedback for the candidate" className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm" /><Button variant="thunder" size="sm" onClick={saveScore} disabled={savingScore}>{savingScore ? 'Saving…' : 'Save Score'}</Button></div> : <div><p className="text-2xl font-bold text-cyan-300">{backendInterview.score ?? 'Pending'}{backendInterview.score != null ? ' / 100' : ''}</p>{backendInterview.scoreFeedback && <p className="text-sm text-slate-400 mt-1">{backendInterview.scoreFeedback}</p>}</div>}

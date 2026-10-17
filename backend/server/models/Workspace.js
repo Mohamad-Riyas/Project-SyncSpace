@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const crypto = require("crypto");
 
 function generateInviteCode() {
-  return crypto.randomBytes(5).toString("hex").toUpperCase();
+  return crypto.randomInt(100000, 1000000).toString();
 }
 function generateRoomId() {
   return `room-${crypto.randomBytes(9).toString("hex")}`;

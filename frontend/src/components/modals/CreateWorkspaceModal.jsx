@@ -8,7 +8,7 @@ import { WorkspaceKind } from '../../types/workspace';
 import { getCurrentUserName } from '../../data/currentUser';
 import { useNavigate } from 'react-router-dom';
 
-export const CreateWorkspaceModal = ({ isOpen, onClose, onCreate }) => {
+export const CreateWorkspaceModal = ({ isOpen, onClose, onCreate, onCreateInterview }) => {
   const { role } = useAuth();
   const navigate = useNavigate();
   const canCreateInterviews = role === 'interviewer' || role === 'admin';
@@ -17,37 +17,52 @@ export const CreateWorkspaceModal = ({ isOpen, onClose, onCreate }) => {
   const [kind, setKind] = useState(WorkspaceKind.GENERAL);
   const [type, setType] = useState('Code + Whiteboard');
   const [error, setError] = useState('');
+  const [creatingInterview, setCreatingInterview] = useState(false);
   const { showToast } = useToast();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!name.trim()) {
-      setError('Workspace name is required.');
-      showToast('Workspace name is required', 'error');
+      const message = kind === WorkspaceKind.INTERVIEW ? 'Interview title is required.' : 'Workspace name is required.';
+      setError(message);
+      showToast(message, 'error');
       return;
     }
-    const randomCode = `SYNC-${Math.floor(1000 + Math.random() * 9000)}`;
     const isInterview = kind === WorkspaceKind.INTERVIEW;
-    const toolType = isInterview ? 'Code + Whiteboard' : type;
+    if (isInterview) {
+      setError('');
+      setCreatingInterview(true);
+      try {
+        await onCreateInterview({ title: name.trim() });
+        setName('');
+        setDescription('');
+        setKind(WorkspaceKind.GENERAL);
+        setType('Code + Whiteboard');
+        onClose();
+      } catch (err) {
+        const message = err.message || 'Could not create the interview.';
+        setError(message);
+        showToast(message, 'error');
+      } finally {
+        setCreatingInterview(false);
+      }
+      return;
+    }
+
+    const randomCode = `SYNC-${Math.floor(1000 + Math.random() * 9000)}`;
+    const toolType = type;
     onCreate({
       name: name.trim(),
       description:
         description.trim() ||
-        (isInterview
-          ? 'Technical interview workspace with collaborative whiteboard and code editor.'
-          : 'Real-time electric collaborative workspace session.'),
+        'Real-time electric collaborative workspace session.',
       kind,
       type: toolType,
       code: randomCode,
       owner: getCurrentUserName() || 'You',
-      tags: isInterview ? ['Interview', toolType.replace(' + ', '-')] : [toolType.replace(' + ', '-')],
+      tags: [toolType.replace(' + ', '-')],
     });
-    showToast(
-      isInterview
-        ? `Interview workspace "${name.trim()}" created`
-        : `Workspace "${name.trim()}" created successfully!`,
-      'success'
-    );
+    showToast(`Workspace "${name.trim()}" created successfully!`, 'success');
     setName('');
     setDescription('');
     setKind(WorkspaceKind.GENERAL);
@@ -96,14 +111,14 @@ export const CreateWorkspaceModal = ({ isOpen, onClose, onCreate }) => {
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Create New Workspace"
-      subtitle={canCreateInterviews ? 'Choose a general room or an interview workspace.' : 'Create a general collaborative workspace.'}
+      title={kind === WorkspaceKind.INTERVIEW ? 'Create Interview' : 'Create New Workspace'}
+      subtitle={kind === WorkspaceKind.INTERVIEW ? 'Create a live interview session with its own join code.' : canCreateInterviews ? 'Choose a general room or an interview session.' : 'Create a general collaborative workspace.'}
       maxWidth="md"
     >
       <form onSubmit={handleSubmit} className="space-y-5">
         <div>
           <label htmlFor="ws-name" className="block text-xs font-semibold text-cyan-300 uppercase tracking-wider mb-2">
-            Workspace Name <span className="text-rose-400">*</span>
+            {kind === WorkspaceKind.INTERVIEW ? 'Interview Title' : 'Workspace Name'} <span className="text-rose-400">*</span>
           </label>
           <input
             id="ws-name"
@@ -123,19 +138,21 @@ export const CreateWorkspaceModal = ({ isOpen, onClose, onCreate }) => {
           {error && <p className="text-xs text-rose-400 mt-1.5">{error}</p>}
         </div>
 
-        <div>
-          <label htmlFor="ws-desc" className="block text-xs font-semibold text-cyan-300 uppercase tracking-wider mb-2">
-            Description <span className="text-slate-400 font-normal lowercase">(optional)</span>
-          </label>
-          <textarea
-            id="ws-desc"
-            rows={2}
-            placeholder="Briefly describe what this room is for..."
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="w-full bg-slate-950 border border-slate-800 focus:border-cyan-500 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 transition-all resize-none"
-          />
-        </div>
+        {kind === WorkspaceKind.GENERAL && (
+          <div>
+            <label htmlFor="ws-desc" className="block text-xs font-semibold text-cyan-300 uppercase tracking-wider mb-2">
+              Description <span className="text-slate-400 font-normal lowercase">(optional)</span>
+            </label>
+            <textarea
+              id="ws-desc"
+              rows={2}
+              placeholder="Briefly describe what this room is for..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full bg-slate-950 border border-slate-800 focus:border-cyan-500 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 transition-all resize-none"
+            />
+          </div>
+        )}
 
         <div>
           <label className="block text-xs font-semibold text-cyan-300 uppercase tracking-wider mb-2">
@@ -224,8 +241,8 @@ export const CreateWorkspaceModal = ({ isOpen, onClose, onCreate }) => {
           <Button type="button" variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="submit" variant="thunder">
-            Create Workspace
+          <Button type="submit" variant="thunder" disabled={creatingInterview}>
+            {creatingInterview ? 'Creating…' : kind === WorkspaceKind.INTERVIEW ? 'Create Interview' : 'Create Workspace'}
           </Button>
         </div>
       </form>

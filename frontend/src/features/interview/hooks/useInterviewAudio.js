@@ -15,7 +15,11 @@ export function useInterviewAudio(roomId) {
   const [connectionState, setConnectionState] = useState('idle');
   const [muted, setMuted] = useState(true);
   const [error, setError] = useState('');
+  const [cameraError, setCameraError] = useState('');
+  const [cameraEnabled, setCameraEnabled] = useState(false);
+  const [localCameraStream, setLocalCameraStream] = useState(null);
   const [remotePeers, setRemotePeers] = useState([]); // [{ id, muted }]
+  const [remoteStreams, setRemoteStreams] = useState([]);
   const remoteStreamsRef = useRef(new Map());
   const meshRef = useRef(null);
   const audioElsRef = useRef(new Map());
@@ -29,6 +33,7 @@ export function useInterviewAudio(roomId) {
     }
     el.srcObject = stream;
     remoteStreamsRef.current.set(peerId, stream);
+    setRemoteStreams([...remoteStreamsRef.current.entries()]);
     setRemotePeers((prev) => (prev.some((p) => p.id === peerId) ? prev : [...prev, { id: peerId, muted: false }]));
   }, []);
 
@@ -39,6 +44,7 @@ export function useInterviewAudio(roomId) {
       audioElsRef.current.delete(peerId);
     }
     remoteStreamsRef.current.delete(peerId);
+    setRemoteStreams([...remoteStreamsRef.current.entries()]);
     setRemotePeers((prev) => prev.filter((p) => p.id !== peerId));
   }, []);
 
@@ -53,6 +59,10 @@ export function useInterviewAudio(roomId) {
       onRemoteStream: attachRemoteAudio,
       onRemoteLeft: detachRemoteAudio,
       onMicState: setPeerMicState,
+      onModeratorMute: () => {
+        meshRef.current?.setMuted(true);
+        setMuted(true);
+      },
     });
     meshRef.current = mesh;
 
@@ -82,7 +92,10 @@ export function useInterviewAudio(roomId) {
       });
       audioElsRef.current.clear();
       remoteStreamsRef.current.clear();
+      setRemoteStreams([]);
       setRemotePeers([]);
+      setLocalCameraStream(null);
+      setCameraEnabled(false);
       setConnectionState('idle');
     };
   }, [roomId, attachRemoteAudio, detachRemoteAudio, setPeerMicState]);
@@ -95,11 +108,27 @@ export function useInterviewAudio(roomId) {
     });
   }, []);
 
+  const toggleCamera = useCallback(async () => {
+    setCameraError('');
+    try {
+      const stream = await meshRef.current?.toggleCamera();
+      setLocalCameraStream(stream || null);
+      setCameraEnabled(Boolean(stream));
+    } catch (err) {
+      setCameraError(err.name === 'NotAllowedError' ? 'Camera permission was denied.' : err.message || 'Could not start the camera.');
+    }
+  }, []);
+
+  const muteCandidate = useCallback((targetSocketId) => {
+    getSocket().emit('moderator-mute', { targetSocketId });
+  }, []);
+  const muteCandidates = useCallback(() => getSocket().emit('moderator-mute'), []);
+
   const getRecordingStreams = useCallback(() => {
     const local = meshRef.current?.getLocalStream?.() || null;
     const remotes = [...remoteStreamsRef.current.entries()];
-    return { localStream: local, remoteStreams: remotes };
-  }, []);
+    return { localStream: local, localCameraStream, remoteStreams: remotes };
+  }, [localCameraStream]);
 
-  return { connectionState, muted, toggleMute, error, remotePeers, getRecordingStreams };
+  return { connectionState, muted, toggleMute, error, remotePeers, getRecordingStreams, cameraEnabled, cameraError, localCameraStream, toggleCamera, muteCandidate, muteCandidates, remoteStreams };
 }

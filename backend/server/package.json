@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
+    "migrate:interview-index": "node scripts/fix-legacy-interview-index.js",
     "migrate:workspace-indexes": "node scripts/fix-legacy-workspace-indexes.js"
   },
   "keywords": [],

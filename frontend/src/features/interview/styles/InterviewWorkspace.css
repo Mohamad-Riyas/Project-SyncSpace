@@ -49,6 +49,10 @@
   min-width: 0;
 }
 
+.interview-theme-toggle {
+  flex: 0 0 auto;
+}
+
 .interview-header-title-block h1 {
   font-size: 16px;
   font-weight: 700;

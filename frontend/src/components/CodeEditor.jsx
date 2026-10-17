@@ -3,6 +3,7 @@ import Editor from '@monaco-editor/react';
 import { Plus, FolderPlus, Trash2, Save, FileCode2, Folder, ChevronRight, ChevronDown, Play, Terminal, X, RefreshCw } from 'lucide-react';
 import { workspaceFilesApi } from '../api/client';
 import { useToast } from '../context/ToastContext';
+import { getSocket } from '../services/socket';
 import './CodeEditor.css';
 
 const languageFromName = (name) => {
@@ -118,6 +119,8 @@ function CodeEditor({ workspaceId, roomId, onActivity }) {
   const [stdin, setStdin] = useState('');
   const [expanded, setExpanded] = useState({});
   const starterFileRequestRef = useRef(null);
+  const dirtyRef = useRef(false);
+  const codeRef = useRef('');
 
   const files = useMemo(() => items.filter((x) => x.kind === 'file'), [items]);
   const folders = useMemo(() => items.filter((x) => x.kind === 'folder'), [items]);
@@ -150,7 +153,7 @@ function CodeEditor({ workspaceId, roomId, onActivity }) {
       }
       setItems(next);
       const first = next.find((x) => x.kind === 'file');
-      if (first) { setActiveId(first.id); setCode(first.content || ''); }
+      if (first) { setActiveId(first.id); dirtyRef.current = false; codeRef.current = first.content || ''; setCode(codeRef.current); }
       setOutput('');
       setRunStatus('idle');
     } catch (err) {
@@ -161,14 +164,21 @@ function CodeEditor({ workspaceId, roomId, onActivity }) {
   useEffect(() => { load(); }, [load]);
 
   useEffect(() => {
-    if (activeFile) setCode(activeFile.content || '');
-  }, [activeFile]);
+    if (activeFile && !dirtyRef.current) {
+      codeRef.current = activeFile.content || '';
+      setCode(codeRef.current);
+    }
+  }, [activeFile?.id, activeFile?.content]);
 
   useEffect(() => {
     if (!workspaceId || !/^[a-f0-9]{24}$/i.test(String(workspaceId))) return undefined;
     const onRemoteUpdate = (event) => {
       const file = event.detail;
       if (!file || String(file.workspace || workspaceId) !== String(workspaceId)) return;
+      if (String(activeId) === String(file.id) && !dirtyRef.current) {
+        codeRef.current = file.content || '';
+        setCode(codeRef.current);
+      }
       setItems((prev) => prev.some((x) => x.id === file.id) ? prev.map((x) => x.id === file.id ? file : x) : [...prev, file]);
     };
     const onRemoteDelete = (event) => {
@@ -176,19 +186,63 @@ function CodeEditor({ workspaceId, roomId, onActivity }) {
       if (!deleted?.id) return;
       setItems((prev) => prev.filter((x) => x.id !== deleted.id && !String(x.path).startsWith(`${deleted.path}/`)));
       if (activeId === deleted.id) {
+        dirtyRef.current = false;
+        codeRef.current = '';
         setActiveId(null);
         setCode('');
       }
     };
+    const onRealtimeEdit = (event) => {
+      const update = event.detail;
+      if (String(update?.workspaceId) !== String(workspaceId) || String(update?.fileId) !== String(activeId) || dirtyRef.current) return;
+      codeRef.current = update.content;
+      setCode(update.content);
+    };
     window.addEventListener('syncspace:file-updated', onRemoteUpdate);
     window.addEventListener('syncspace:file-deleted', onRemoteDelete);
+    const socket = getSocket();
+    const onSocketEdit = (update) => {
+      if (String(update?.workspaceId) === String(workspaceId)) {
+        window.dispatchEvent(new CustomEvent('syncspace:file-edit', { detail: update }));
+      }
+    };
+    socket.on('workspace:file-edit', onSocketEdit);
+    window.addEventListener('syncspace:file-edit', onRealtimeEdit);
     return () => {
       window.removeEventListener('syncspace:file-updated', onRemoteUpdate);
       window.removeEventListener('syncspace:file-deleted', onRemoteDelete);
+      window.removeEventListener('syncspace:file-edit', onRealtimeEdit);
+      socket.off('workspace:file-edit', onSocketEdit);
     };
   }, [activeId, workspaceId]);
 
-  const selectFile = (file) => { setActiveId(file.id); setCode(file.content || ''); setOutput(''); setRunStatus('idle'); };
+  useEffect(() => {
+    if (!dirtyRef.current || !activeFile || !workspaceId || !/^[a-f0-9]{24}$/i.test(String(workspaceId))) return undefined;
+    const fileId = activeFile.id;
+    const content = code;
+    const timeout = window.setTimeout(async () => {
+      setSaving(true);
+      try {
+        const { file } = await workspaceFilesApi.update(workspaceId, fileId, { content });
+        setItems((prev) => prev.map((item) => item.id === file.id ? file : item));
+        if (codeRef.current === content) dirtyRef.current = false;
+      } catch (err) {
+        showToast(err.message || 'Could not sync your changes', 'error');
+      } finally {
+        setSaving(false);
+      }
+    }, 400);
+    return () => window.clearTimeout(timeout);
+  }, [activeFile?.id, code, showToast, workspaceId]);
+
+  const selectFile = (file) => {
+    dirtyRef.current = false;
+    codeRef.current = file.content || '';
+    setActiveId(file.id);
+    setCode(codeRef.current);
+    setOutput('');
+    setRunStatus('idle');
+  };
 
   const addFolder = async (parentPath = '') => {
     const name = window.prompt(parentPath ? `New folder inside ${parentPath}:` : 'Folder name:')?.trim();
@@ -207,6 +261,8 @@ function CodeEditor({ workspaceId, roomId, onActivity }) {
     try {
       const { file } = await workspaceFilesApi.create(workspaceId, { name, kind: 'file', parentPath, language: languageFromName(name), content: '' });
       setItems((prev) => [...prev, file]);
+      dirtyRef.current = false;
+      codeRef.current = '';
       setActiveId(file.id); setCode(''); setExpanded((prev) => ({ ...prev, [parentPath]: true }));
       showToast(`File “${file.name}” created`, 'success');
     } catch (err) { showToast(err.message || 'Could not create file', 'error'); }
@@ -218,6 +274,7 @@ function CodeEditor({ workspaceId, roomId, onActivity }) {
     try {
       const { file } = await workspaceFilesApi.update(workspaceId, activeFile.id, { content: code });
       setItems((prev) => prev.map((x) => x.id === file.id ? file : x));
+      if (codeRef.current === code) dirtyRef.current = false;
       showToast(`Saved ${file.name}`, 'success');
     } catch (err) { showToast(err.message || 'Could not save file', 'error'); }
     finally { setSaving(false); }
@@ -320,7 +377,7 @@ function CodeEditor({ workspaceId, roomId, onActivity }) {
               <button type="button" className="toolbar-button save-button" disabled={!activeFile || saving} onClick={save}><Save /> {saving ? 'Saving…' : 'Save'}</button>
             </div>
           </div>
-          <div className="monaco-wrap"><Editor height="100%" language={activeFile?.language || 'plaintext'} value={code} theme="vs-dark" onChange={(v) => setCode(v || '')} options={{ fontSize: 14, minimap: { enabled: false }, automaticLayout: true, wordWrap: 'on', scrollBeyondLastLine: false, padding: { top: 12, bottom: 12 }, smoothScrolling: true }} /></div>
+          <div className="monaco-wrap"><Editor height="100%" language={activeFile?.language || 'plaintext'} value={code} theme="vs-dark" onChange={(v) => { const next = v || ''; if (next === codeRef.current) return; codeRef.current = next; dirtyRef.current = true; setCode(next); if (activeFile && /^[a-f0-9]{24}$/i.test(String(workspaceId))) getSocket().emit('workspace:file-edit', { workspaceId: String(workspaceId), fileId: String(activeFile.id), content: next }); }} options={{ fontSize: 14, minimap: { enabled: false }, automaticLayout: true, wordWrap: 'on', scrollBeyondLastLine: false, padding: { top: 12, bottom: 12 }, smoothScrolling: true }} /></div>
           <div className={`editor-output ${runStatus} ${activeFile?.language === 'python' ? 'has-stdin' : ''}`}>
             <div className="output-header"><div><Terminal /> Terminal</div><button type="button" onClick={() => { setOutput(''); setRunStatus('idle'); }} title="Clear terminal"><X /></button></div>
             {activeFile?.language === 'python' && <label className="program-input"><span>Program input · one response per line</span><textarea value={stdin} onChange={(event) => setStdin(event.target.value)} placeholder={'Calculator example: enter each response on a new line\n1\n8\n2\n7'} spellCheck="false" /></label>}

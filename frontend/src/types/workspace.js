@@ -13,10 +13,7 @@ export const WorkspaceKind = {
 export const isInterviewWorkspace = (workspace) =>
   workspace?.kind === WorkspaceKind.INTERVIEW;
 
-export const getWorkspacePath = (workspace) =>
-  isInterviewWorkspace(workspace)
-    ? `/interview/${workspace.id}`
-    : `/workspaces/${workspace.id}`;
+export const getWorkspacePath = (workspace) => `/workspaces/${workspace.id}`;
 
 export const WorkspaceStatus = {
   ACTIVE: 'Active',

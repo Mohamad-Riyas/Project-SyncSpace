@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Mic, MicOff, Share2, Check } from "lucide-react";
+import { ThemeToggle } from "./ui/ThemeToggle";
 import "./WorkspaceHeader.css";
 
 function WorkspaceHeader({ roomId, workspaceName, workspaceType, inviteCode, collaborators = [], onLeave }) {
@@ -31,10 +32,11 @@ function WorkspaceHeader({ roomId, workspaceName, workspaceType, inviteCode, col
       </div>
 
       <div className="header-right">
-        <button type="button" onClick={() => setIsMicOn(!isMicOn)} style={{ padding: '6px', borderRadius: '4px', background: 'rgba(255,255,255,0.1)', border: 'none', cursor: 'pointer', color: 'var(--color-text-main)', marginRight: '4px' }}>
+        <ThemeToggle className="workspace-theme-toggle" />
+        <button type="button" onClick={() => setIsMicOn(!isMicOn)} className="workspace-control-button" aria-label={isMicOn ? "Mute microphone" : "Unmute microphone"}>
           {isMicOn ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5 text-red-400" />}
         </button>
-        <button type="button" onClick={share} title="Share workspace" style={{ padding: '6px 10px', borderRadius: '6px', background: 'rgba(6,182,212,0.12)', border: '1px solid rgba(6,182,212,0.3)', color: 'var(--color-text-main)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+        <button type="button" onClick={share} title="Share workspace" className="workspace-control-button workspace-share-button">
           {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Share2 className="w-4 h-4" />}
           {copied ? 'Copied' : 'Share'}
         </button>

@@ -45,7 +45,7 @@ export function App() {
               <Route path="/workspaces/:id" element={<WorkspaceRoute><WorkspacePage /></WorkspaceRoute>} />
               <Route path="/sessions" element={<Navigate to="/audit-logs" replace />} />
               <Route path="/audit-logs" element={<ProtectedRoute><AuditLogsPage /></ProtectedRoute>} />
-              <Route path="/recordings" element={<RoleRoute roles={["admin", "interviewer"]}><RecordingsPage /></RoleRoute>} />
+              <Route path="/recordings" element={<ProtectedRoute><RecordingsPage /></ProtectedRoute>} />
               <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
 
               {/* Interview create/join/workspace flow */}

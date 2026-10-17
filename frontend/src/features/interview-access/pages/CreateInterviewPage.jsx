@@ -13,7 +13,7 @@ export function CreateInterviewPage() {
   const { showToast } = useToast();
   const { user, role } = useAuth();
   const [title, setTitle] = useState('');
-  const [candidateEmail, setCandidateEmail] = useState('');
+  const [candidateEmailsInput, setCandidateEmailsInput] = useState('');
   const [scheduledAt, setScheduledAt] = useState('');
   const [durationMinutes, setDurationMinutes] = useState(60);
   const [questions, setQuestions] = useState([emptyQuestion()]);
@@ -34,9 +34,10 @@ export function CreateInterviewPage() {
     if (!cleaned.length) return setError('Add at least one interview question.');
     setSubmitting(true); setError('');
     try {
-      const { interview } = await interviewsApi.create({ title: title.trim(), candidateEmail: candidateEmail.trim() || undefined, scheduledAt: scheduledAt || undefined, durationMinutes, questions: cleaned });
+      const candidateEmails = [...new Set(candidateEmailsInput.split(/[\s,;]+/).map((email) => email.trim().toLowerCase()).filter(Boolean))];
+      const { interview } = await interviewsApi.create({ title: title.trim(), candidateEmails, scheduledAt: scheduledAt || undefined, durationMinutes, questions: cleaned });
       setCreated(interview);
-      setCandidateEmailUpdate(interview.candidateEmail || '');
+      setCandidateEmailUpdate('');
       showToast('Interview created successfully', 'success');
     } catch (err) { setError(err.message || 'Could not create the interview.'); }
     finally { setSubmitting(false); }
@@ -47,8 +48,9 @@ export function CreateInterviewPage() {
     if (!candidateEmailUpdate.trim()) return;
     setUpdatingCandidate(true);
     try {
-      const { interview } = await interviewsApi.updateCandidate(created.id, candidateEmailUpdate.trim());
+      const { interview } = await interviewsApi.addCandidate(created.id, candidateEmailUpdate.trim());
       setCreated(interview);
+      setCandidateEmailUpdate('');
       showToast('Candidate email updated', 'success');
     } catch (err) {
       showToast(err.message || 'Could not update candidate', 'error');
@@ -73,13 +75,14 @@ export function CreateInterviewPage() {
           <div className="mt-6 rounded-2xl bg-slate-950 border border-slate-800 p-5">
             <div className="flex items-center gap-2 mb-4">
               <Mail className="w-4 h-4 text-cyan-300" />
-              <h3 className="text-sm font-semibold">Candidate Email {created.candidateEmail && <span className="text-xs text-slate-500">(optional)</span>}</h3>
+              <h3 className="text-sm font-semibold">Invite candidates</h3>
             </div>
             <form onSubmit={handleUpdateCandidate} className="space-y-3">
               <input type="email" className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm outline-none focus:border-cyan-500/50" placeholder="candidate@example.com" value={candidateEmailUpdate} onChange={(e) => setCandidateEmailUpdate(e.target.value)} />
-              <p className="text-xs text-slate-500">Only this registered email can join this interview.</p>
-              <Button type="submit" size="sm" disabled={updatingCandidate || !candidateEmailUpdate.trim()}>{updatingCandidate ? 'Updating…' : 'Update Candidate'}</Button>
+              <p className="text-xs text-slate-500">Only registered accounts invited to this interview can join. Candidates receive an in-app notification when online.</p>
+              <Button type="submit" size="sm" disabled={updatingCandidate || !candidateEmailUpdate.trim()}>{updatingCandidate ? 'Adding…' : 'Add Candidate'}</Button>
             </form>
+            {created.candidateEmails?.length > 0 && <div className="mt-4 flex flex-wrap gap-2">{created.candidateEmails.map((email) => <span key={email} className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-xs text-slate-300">{email}</span>)}</div>}
           </div>
 
           <div className="mt-6 flex flex-wrap gap-3"><Button variant="outline" onClick={() => navigate('/interviews')}>Back to Interviews</Button><Button onClick={() => navigate(`/interview/${created.id}`)}>Open Interview</Button></div>
@@ -98,7 +101,7 @@ export function CreateInterviewPage() {
         <form onSubmit={handleSubmit} className="space-y-6">
           <section className="bg-slate-900/65 border border-slate-800 rounded-2xl p-6"><h2 className="font-semibold">Interview details</h2><div className="grid lg:grid-cols-2 gap-5 mt-5">
             <label className="block text-sm text-slate-300">Interview title<input className="mt-2 w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-3 text-sm outline-none focus:border-cyan-500/50" placeholder="Frontend Developer — Round 2" value={title} onChange={(e) => setTitle(e.target.value)} required /></label>
-            <label className="block text-sm text-slate-300">Candidate email <span className="text-slate-600">(optional)</span><input type="email" className="mt-2 w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-3 text-sm outline-none focus:border-cyan-500/50" placeholder="candidate@example.com" value={candidateEmail} onChange={(e) => setCandidateEmail(e.target.value)} /></label>
+            <label className="block text-sm text-slate-300">Candidate emails <span className="text-slate-600">(optional)</span><textarea className="mt-2 w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-3 text-sm outline-none focus:border-cyan-500/50 min-h-24 resize-y" placeholder="candidate@example.com, teammate@example.com" value={candidateEmailsInput} onChange={(e) => setCandidateEmailsInput(e.target.value)} /><span className="block mt-1 text-xs text-slate-500">Separate registered candidate emails with commas, spaces, or new lines.</span></label>
             <label className="block text-sm text-slate-300">Duration<select value={durationMinutes} onChange={(e) => setDurationMinutes(Number(e.target.value))} className="mt-2 w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-3 text-sm">{[15,30,45,60,90,120].map((v) => <option key={v} value={v}>{v} minutes</option>)}</select></label>
             <label className="block text-sm text-slate-300">Scheduled for <span className="text-slate-600">(optional)</span><input type="datetime-local" className="mt-2 w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-3 text-sm" value={scheduledAt} onChange={(e) => setScheduledAt(e.target.value)} /></label>
           </div></section>

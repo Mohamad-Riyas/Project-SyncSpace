@@ -10,7 +10,7 @@ function userFromPayload(payload) {
     userId: payload.userId,
     email: payload.email,
     role: payload.role,
-    ...(payload.guest ? { guest: true, name: payload.name, workspaceId: payload.workspaceId } : {}),
+    ...(payload.guest ? { guest: true, name: payload.name, workspaceId: payload.workspaceId, interviewId: payload.interviewId } : {}),
   };
 }
 

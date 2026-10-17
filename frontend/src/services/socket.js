@@ -1,7 +1,7 @@
 import { io } from 'socket.io-client';
-import { getToken } from '../api/client';
+import { getAccessToken } from '../api/client';
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5001';
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
 
 let socket = null;
 
@@ -16,8 +16,12 @@ export function getSocket() {
   if (!socket) {
     socket = io(SOCKET_URL, {
       autoConnect: true,
-      auth: { token: getToken() },
+      auth: { token: getAccessToken() },
     });
+  } else if (socket.auth?.token !== getAccessToken()) {
+    socket.auth = { token: getAccessToken() };
+    if (socket.connected) socket.disconnect();
+    socket.connect();
   }
   return socket;
 }

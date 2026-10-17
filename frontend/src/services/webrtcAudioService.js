@@ -9,9 +9,12 @@
  */
 const ICE_SERVERS = [{ urls: 'stun:stun.l.google.com:19302' }];
 
-export function createAudioMesh(socket, { onRemoteStream, onRemoteLeft, onMicState }) {
+export function createAudioMesh(socket, { onRemoteStream, onRemoteLeft, onMicState, onModeratorMute }) {
   const peers = new Map(); // socketId -> RTCPeerConnection
+  const remoteStreams = new Map(); // socketId -> combined audio/video stream
+  const pendingPeers = new Set();
   let localStream = null;
+  let cameraStream = null;
 
   const createPeerConnection = (peerId) => {
     const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
@@ -26,14 +29,37 @@ export function createAudioMesh(socket, { onRemoteStream, onRemoteLeft, onMicSta
         socket.emit('webrtc-ice-candidate', { to: peerId, candidate: event.candidate });
       }
     };
+    pc.onnegotiationneeded = async () => {
+      if (!pc.remoteDescription || pc.signalingState !== 'stable') return;
+      try {
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        socket.emit('webrtc-offer', { to: peerId, offer: pc.localDescription });
+      } catch (err) {
+        console.error('Could not renegotiate interview media:', err);
+      }
+    };
 
     pc.ontrack = (event) => {
-      onRemoteStream?.(peerId, event.streams[0]);
+      let stream = remoteStreams.get(peerId);
+      if (!stream) {
+        stream = new MediaStream();
+        remoteStreams.set(peerId, stream);
+      }
+      if (!stream.getTracks().some((track) => track.id === event.track.id)) {
+        stream.addTrack(event.track);
+        event.track.addEventListener('ended', () => {
+          stream.removeTrack(event.track);
+          onRemoteStream?.(peerId, stream);
+        }, { once: true });
+      }
+      onRemoteStream?.(peerId, stream);
     };
 
     pc.onconnectionstatechange = () => {
       if (['disconnected', 'failed', 'closed'].includes(pc.connectionState)) {
         peers.delete(peerId);
+        remoteStreams.delete(peerId);
         onRemoteLeft?.(peerId);
       }
     };
@@ -42,14 +68,19 @@ export function createAudioMesh(socket, { onRemoteStream, onRemoteLeft, onMicSta
   };
 
   const callPeer = async (peerId) => {
-    const pc = createPeerConnection(peerId);
+    if (!localStream) {
+      pendingPeers.add(peerId);
+      return;
+    }
+    pendingPeers.delete(peerId);
+    const pc = peers.get(peerId) || createPeerConnection(peerId);
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
     socket.emit('webrtc-offer', { to: peerId, offer });
   };
 
   const handleOffer = async ({ from, offer }) => {
-    const pc = createPeerConnection(from);
+    const pc = peers.get(from) || createPeerConnection(from);
     await pc.setRemoteDescription(new RTCSessionDescription(offer));
     const answer = await pc.createAnswer();
     await pc.setLocalDescription(answer);
@@ -87,12 +118,14 @@ export function createAudioMesh(socket, { onRemoteStream, onRemoteLeft, onMicSta
       pc.close();
       peers.delete(userId);
     }
+    remoteStreams.delete(userId);
     onRemoteLeft?.(userId);
   };
 
   const handleMicState = ({ userId, muted }) => {
     onMicState?.(userId, muted);
   };
+  const handleModeratorMute = () => onModeratorMute?.();
 
   socket.on('webrtc-offer', handleOffer);
   socket.on('webrtc-answer', handleAnswer);
@@ -101,22 +134,34 @@ export function createAudioMesh(socket, { onRemoteStream, onRemoteLeft, onMicSta
   socket.on('user-joined', handleUserJoined);
   socket.on('user-left', handleUserLeft);
   socket.on('mic-state', handleMicState);
+  socket.on('moderator-mute', handleModeratorMute);
 
   return {
     async start() {
       localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const peersToCall = [...pendingPeers];
+      await Promise.all(peersToCall.map((peerId) => callPeer(peerId)));
       return localStream;
+    },
+    async toggleCamera() {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach((track) => track.stop());
+        cameraStream = null;
+        peers.forEach((pc) => pc.getSenders().filter((sender) => sender.track?.kind === 'video').forEach((sender) => pc.removeTrack(sender)));
+        return null;
+      }
+      cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
+      peers.forEach((pc) => cameraStream.getTracks().forEach((track) => pc.addTrack(track, cameraStream)));
+      return cameraStream;
+    },
+    getCameraStream() {
+      return cameraStream;
     },
     getLocalStream() {
       return localStream;
     },
     getRemoteStreams() {
-      const streams = [];
-      peers.forEach((pc, peerId) => {
-        const receiver = pc.getReceivers().find((r) => r.track && r.track.kind === "audio");
-        if (receiver?.track) streams.push({ peerId, stream: new MediaStream([receiver.track]) });
-      });
-      return streams;
+      return [...remoteStreams.entries()].map(([peerId, stream]) => ({ peerId, stream }));
     },
     setMuted(muted) {
       if (localStream) {
@@ -134,11 +179,18 @@ export function createAudioMesh(socket, { onRemoteStream, onRemoteLeft, onMicSta
       socket.off('user-joined', handleUserJoined);
       socket.off('user-left', handleUserLeft);
       socket.off('mic-state', handleMicState);
+      socket.off('moderator-mute', handleModeratorMute);
       peers.forEach((pc) => pc.close());
       peers.clear();
+      remoteStreams.clear();
+      pendingPeers.clear();
       if (localStream) {
         localStream.getTracks().forEach((t) => t.stop());
         localStream = null;
+      }
+      if (cameraStream) {
+        cameraStream.getTracks().forEach((t) => t.stop());
+        cameraStream = null;
       }
     },
   };

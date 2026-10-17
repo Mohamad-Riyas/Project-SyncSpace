@@ -59,6 +59,13 @@ export const Dashboard = ({ readOnly = false }) => {
     }
   };
 
+  const handleCreateInterview = async ({ title }) => {
+    const { interview } = await interviewsApi.create({ title, questions: [] });
+    setInterviews((current) => [interview, ...current.filter((item) => item.id !== interview.id)]);
+    showToast(`Interview "${interview.title}" created`, 'success');
+    navigate(`/interview/${interview.id}`);
+  };
+
   const handleJoinWorkspace = async (code) => {
     try {
       const { workspace } = await workspaceApi.join(code);
@@ -109,7 +116,13 @@ export const Dashboard = ({ readOnly = false }) => {
 
   return (
     <DashboardLayout title="Dashboard" searchQuery={searchQuery} setSearchQuery={setSearchQuery}>
-      <WelcomeSection onCreateWorkspace={() => setCreateModalOpen(true)} onJoinWorkspace={() => setJoinModalOpen(true)} readOnly={readOnly} showLaptop={!isAuthenticated} />
+      <WelcomeSection
+        onCreateWorkspace={() => setCreateModalOpen(true)}
+        onJoinWorkspace={() => setJoinModalOpen(true)}
+        onSignIn={() => navigate('/login')}
+        onRegister={() => navigate('/register')}
+        readOnly={readOnly}
+      />
       {loading ? (
         <div className="py-12 text-center text-sm text-slate-500">Loading live workspace data…</div>
       ) : (
@@ -143,7 +156,7 @@ export const Dashboard = ({ readOnly = false }) => {
 
       {!readOnly && isAuthenticated && (
         <>
-          <CreateWorkspaceModal isOpen={createModalOpen} onClose={() => setCreateModalOpen(false)} onCreate={handleCreateWorkspace} />
+          <CreateWorkspaceModal isOpen={createModalOpen} onClose={() => setCreateModalOpen(false)} onCreate={handleCreateWorkspace} onCreateInterview={handleCreateInterview} />
           <JoinWorkspaceModal isOpen={joinModalOpen} onClose={() => setJoinModalOpen(false)} onJoin={handleJoinWorkspace} />
           <EditWorkspaceModal key={workspaceToEdit?.id || 'closed'} workspace={workspaceToEdit} onClose={() => setWorkspaceToEdit(null)} onSave={handleUpdateWorkspace} onDelete={handleDeleteWorkspace} />
         </>

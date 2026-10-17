@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useParams, Navigate } from 'react-router-dom';
-import { io } from 'socket.io-client';
+import { useNavigate, useParams } from 'react-router-dom';
 import { GripVertical } from 'lucide-react';
 import WorkspaceHeader from '../components/WorkspaceHeader';
 import WorkspaceSidebar from '../components/WorkspaceSidebar';
@@ -10,8 +9,8 @@ import UsersPanel from '../components/UsersPanel';
 import HistoryPanel from '../components/HistoryTemp';
 import SettingsPanel from '../components/SettingsPanel';
 import { getWorkspaceHistory, getWorkspacePreferences, getWorkspaceStore, saveWorkspaceHistory, saveWorkspacePreferences } from '../data/workspaceStore';
-import { isInterviewWorkspace } from '../types/workspace';
-import { workspaceApi, getAccessToken, getGuestSession } from '../api/client';
+import { workspaceApi, getGuestSession } from '../api/client';
+import { getSocket } from '../services/socket';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
 import './Workspace.css';
@@ -45,14 +44,15 @@ export const WorkspacePage = () => {
     if (!MONGO_ID_RE.test(String(id))) { setLoading(false); return undefined; }
     workspaceApi.get(id).then(({ workspace }) => { if (!cancelled) setCurrentWorkspace(workspace); }).catch((err) => { showToast(err.message || 'Could not load workspace', 'error'); navigate(homePath); }).finally(() => { if (!cancelled) setLoading(false); });
     workspaceApi.getActivity(id).then(({ entries }) => { if (!cancelled) setHistoryEntries(entries || []); }).catch((err) => showToast(err.message || 'Could not load workspace history', 'error'));
-    const socket = io(import.meta.env.VITE_SOCKET_URL || 'http://localhost:5001', { auth: { token: getAccessToken() } });
-    socket.on('connect', () => socket.emit('join-workspace', id));
-    socket.on('workspace:access-denied', () => {
+    const socket = getSocket();
+    const onConnect = () => socket.emit('join-workspace', id);
+    const onAccessDenied = (payload) => {
+      if (payload?.workspaceId && String(payload.workspaceId) !== String(id)) return;
       if (cancelled) return;
       showToast('You no longer have access to this workspace', 'error');
       navigate(homePath);
-    });
-    socket.on('workspace:updated', (workspace) => {
+    };
+    const onWorkspaceUpdated = (workspace) => {
       if (cancelled) return;
       const stillMember = isGuest || role === 'admin' || String(workspace.owner) === String(currentUserId) ||
         (workspace.collaboratorList || []).some((member) => String(member.id) === String(currentUserId));
@@ -63,18 +63,36 @@ export const WorkspacePage = () => {
         return;
       }
       setCurrentWorkspace(workspace);
-    });
-    socket.on('workspace:activity', (entry) => {
+    };
+    const onActivity = (entry) => {
       if (!cancelled) setHistoryEntries((entries) => [entry, ...entries.filter((item) => item._id !== entry._id)]);
-    });
-    socket.on('workspace:presence', (participants) => { if (!cancelled) setPresence(participants); });
-    socket.on('workspace:file-updated', (file) => {
+    };
+    const onPresence = (participants) => { if (!cancelled) setPresence(participants); };
+    const onFileUpdated = (file) => {
       if (!cancelled) window.dispatchEvent(new CustomEvent('syncspace:file-updated', { detail: file }));
-    });
-    socket.on('workspace:file-deleted', (payload) => {
+    };
+    const onFileDeleted = (payload) => {
       if (!cancelled) window.dispatchEvent(new CustomEvent('syncspace:file-deleted', { detail: payload }));
-    });
-    return () => { cancelled = true; socket.disconnect(); };
+    };
+    if (socket.connected) onConnect();
+    else socket.on('connect', onConnect);
+    socket.on('workspace:access-denied', onAccessDenied);
+    socket.on('workspace:updated', onWorkspaceUpdated);
+    socket.on('workspace:activity', onActivity);
+    socket.on('workspace:presence', onPresence);
+    socket.on('workspace:file-updated', onFileUpdated);
+    socket.on('workspace:file-deleted', onFileDeleted);
+    return () => {
+      cancelled = true;
+      socket.off('connect', onConnect);
+      socket.off('workspace:access-denied', onAccessDenied);
+      socket.off('workspace:updated', onWorkspaceUpdated);
+      socket.off('workspace:activity', onActivity);
+      socket.off('workspace:presence', onPresence);
+      socket.off('workspace:file-updated', onFileUpdated);
+      socket.off('workspace:file-deleted', onFileDeleted);
+      socket.emit('leave-workspace', id);
+    };
   }, [id, currentUserId, role, isGuest, navigate, showToast]);
 
   const workspaceType = currentWorkspace.type || 'Code + Whiteboard';
@@ -138,7 +156,6 @@ export const WorkspacePage = () => {
     if (bounds?.width) resizePanelsTo(((clientX - bounds.left) / bounds.width) * 100);
   };
 
-  if (localWorkspace && isInterviewWorkspace(localWorkspace)) return <Navigate to={`/interview/${id}`} replace />;
   if (loading) return <div className="min-h-screen bg-slate-950 text-slate-400 flex items-center justify-center">Loading workspace…</div>;
 
   return <div className="workspace" data-active-tab={safeActiveTab}>

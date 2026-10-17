@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const crypto = require("crypto");
 
 function generateCode() {
-  return crypto.randomInt(100000, 999999).toString();
+  return crypto.randomInt(100000, 1000000).toString();
 }
 
 const interviewSchema = new mongoose.Schema(
@@ -11,7 +11,9 @@ const interviewSchema = new mongoose.Schema(
     code: { type: String, required: true, unique: true, index: true, default: generateCode },
     interviewer: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     candidateEmail: { type: String, trim: true, lowercase: true },
+    candidateEmails: { type: [String], default: [] },
     candidate: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+    candidates: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     durationMinutes: { type: Number, default: 60, min: 5, max: 240 },
     status: {
       type: String,

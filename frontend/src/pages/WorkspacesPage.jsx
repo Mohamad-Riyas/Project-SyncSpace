@@ -5,7 +5,7 @@ import { CreateWorkspaceModal } from '../components/modals/CreateWorkspaceModal'
 import { EditWorkspaceModal } from '../components/modals/EditWorkspaceModal';
 import { JoinWorkspaceModal } from '../components/modals/JoinWorkspaceModal';
 import { Button } from '../components/ui/Button';
-import { Plus, Zap, Link2, RefreshCw } from 'lucide-react';
+import { Plus, Link2, RefreshCw } from 'lucide-react';
 import { workspaceApi } from '../api/client';
 import { getWorkspacePath } from '../types/workspace';
 import { useNavigate } from 'react-router-dom';
@@ -84,8 +84,8 @@ export const WorkspacesPage = () => {
     <DashboardLayout title="Workspaces" searchQuery={searchQuery} setSearchQuery={setSearchQuery}>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-100 flex items-center gap-2">All Workspaces <Zap className="w-5 h-5 text-cyan-400" /></h2>
-          <p className="text-sm text-slate-400">Live workspaces stored in MongoDB with secure share links.</p>
+          <h2 className="flex items-center gap-2 text-2xl font-bold text-slate-100">All Workspaces</h2>
+          <p className="text-sm text-slate-400">Collaborative rooms for code, whiteboards, and shared work.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           {role === 'user' && <Button variant="outline" icon={<Link2 className="w-4 h-4" />} onClick={() => navigate('/interviews/join')}>Join Interview</Button>}

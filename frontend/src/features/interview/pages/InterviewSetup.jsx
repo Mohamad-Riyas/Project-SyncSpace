@@ -7,6 +7,9 @@ export function InterviewSetup({
   defaultCandidate = '',
   defaultDuration = 60,
   questionCount = 0,
+  showCandidateName = true,
+  showDuration = true,
+  candidateEmails = [],
   onStart,
 }) {
   const [candidateName, setCandidateName] = useState(defaultCandidate);
@@ -38,27 +41,36 @@ export function InterviewSetup({
         </div>
 
         <form onSubmit={handleSubmit} className="interview-setup-form">
-          <label>
-            Candidate name
-            <input
-              type="text"
-              value={candidateName}
-              onChange={(event) => setCandidateName(event.target.value)}
-              placeholder="e.g. Jordan Lee"
-            />
-          </label>
+          {showCandidateName ? (
+            <label>
+              Candidate name
+              <input
+                type="text"
+                value={candidateName}
+                onChange={(event) => setCandidateName(event.target.value)}
+                placeholder="e.g. Jordan Lee"
+              />
+            </label>
+          ) : (
+            <div className="rounded-xl border border-slate-800 bg-slate-950/70 px-4 py-3">
+              <p className="mb-1 text-xs text-slate-500">Invited candidate{candidateEmails.length === 1 ? '' : 's'}</p>
+              <p className="text-sm text-slate-200">{candidateEmails.length ? candidateEmails.join(', ') : 'No candidates invited yet. Add a registered account from Manage.'}</p>
+            </div>
+          )}
 
-          <label>
-            Duration
-            <select value={durationMinutes} onChange={(event) => setDurationMinutes(Number(event.target.value))}>
-              <option value={15}>15 minutes</option>
-              <option value={30}>30 minutes</option>
-              <option value={45}>45 minutes</option>
-              <option value={60}>60 minutes</option>
-              <option value={90}>90 minutes</option>
-              <option value={120}>120 minutes</option>
-            </select>
-          </label>
+          {showDuration && (
+            <label>
+              Duration
+              <select value={durationMinutes} onChange={(event) => setDurationMinutes(Number(event.target.value))}>
+                <option value={15}>15 minutes</option>
+                <option value={30}>30 minutes</option>
+                <option value={45}>45 minutes</option>
+                <option value={60}>60 minutes</option>
+                <option value={90}>90 minutes</option>
+                <option value={120}>120 minutes</option>
+              </select>
+            </label>
+          )}
 
           <Button type="submit" variant="thunder">
             Start Interview

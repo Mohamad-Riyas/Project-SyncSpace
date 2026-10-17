@@ -1,7 +1,8 @@
-import { ArrowLeft, Mic, MicOff, Wifi, WifiOff, Loader2, Circle, Square } from 'lucide-react';
+import { ArrowLeft, Mic, MicOff, Wifi, WifiOff, Loader2, Circle, Square, Camera, CameraOff, VolumeX } from 'lucide-react';
 import { InterviewTimer } from './InterviewTimer';
 import { InterviewControls } from './InterviewControls';
 import { InterviewStatus } from '../types/interview.types';
+import { ThemeToggle } from '../../../components/ui/ThemeToggle';
 
 const statusLabel = {
   [InterviewStatus.SCHEDULED]: 'Scheduled',
@@ -27,6 +28,10 @@ export function InterviewHeader({
   onToggleMic,
   micConnectionState = 'idle',
   micError = '',
+  cameraEnabled = false,
+  cameraError = '',
+  onToggleCamera,
+  onMuteCandidates,
   recording = false,
   recordingProcessing = false,
   onStartRecording,
@@ -47,6 +52,7 @@ export function InterviewHeader({
           <p className="interview-kicker">Technical Interview</p>
           <h1>{title}</h1>
         </div>
+        <ThemeToggle className="interview-theme-toggle" />
       </div>
 
       <div className="interview-header-center">
@@ -90,13 +96,41 @@ export function InterviewHeader({
           >
             {!micMuted ? <Mic className="w-5 h-5 text-emerald-400" /> : <MicOff className="w-5 h-5 text-red-400" />}
           </button>
+          <button
+            type="button"
+            className="interview-controls-btn"
+            onClick={onToggleCamera}
+            title={cameraError || (cameraEnabled ? 'Turn camera off' : 'Turn camera on')}
+            style={{
+              padding: '6px',
+              borderRadius: '4px',
+              background: cameraEnabled ? 'rgba(16,185,129,0.2)' : 'rgba(255,255,255,0.1)',
+              border: 'none',
+              cursor: 'pointer',
+              color: 'var(--color-text-main)'
+            }}
+          >
+            {cameraEnabled ? <Camera className="w-5 h-5 text-emerald-400" /> : <CameraOff className="w-5 h-5 text-slate-400" />}
+          </button>
+          {canControl && isLive && (
+            <button
+              type="button"
+              className="interview-controls-btn"
+              onClick={onMuteCandidates}
+              title="Mute candidate microphones"
+              style={{ padding: '6px 8px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.08)', color: 'var(--color-text-main)', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+            >
+              <VolumeX className="w-4 h-4" />
+              <span className="hidden xl:inline">Mute candidates</span>
+            </button>
+          )}
           {canControl && isLive && (
             <button
               type="button"
               className="interview-controls-btn"
               onClick={recording ? onStopRecording : onStartRecording}
               disabled={recordingProcessing}
-              title={recordingError || (recording ? 'Stop recording' : 'Start meeting recording')}
+              title={recordingError || (recording ? 'Stop recording' : 'Record screen, cameras and audio')}
               style={{
                 padding: '6px 10px',
                 borderRadius: '6px',

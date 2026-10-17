@@ -1,5 +1,6 @@
 const express = require('express');
 const Workspace = require('../models/Workspace');
+const Interview = require('../models/Interview');
 const WorkspaceFile = require('../models/WorkspaceFile');
 // Every route here is workspace-scoped, so guest tokens are accepted (checked in getWorkspace).
 const { requireAuthOrGuest: requireAuth } = require('../middleware/auth');
@@ -9,7 +10,22 @@ const router = express.Router({ mergeParams: true });
 
 async function getWorkspace(req, res) {
   const ws = await Workspace.findById(req.params.workspaceId);
-  if (!ws) { res.status(404).json({ message: 'Workspace not found' }); return null; }
+  if (!ws) {
+    const interview = await Interview.findById(req.params.workspaceId);
+    if (!interview) { res.status(404).json({ message: 'Workspace not found' }); return null; }
+    const assignedEmails = interview.candidateEmails?.length
+      ? interview.candidateEmails
+      : interview.candidateEmail ? [interview.candidateEmail] : [];
+    const allowed = !req.user.guest && (
+      req.user.role === 'admin' ||
+      String(interview.interviewer) === String(req.user.userId) ||
+      String(interview.candidate || '') === String(req.user.userId) ||
+      interview.candidates.some((candidate) => String(candidate) === String(req.user.userId)) ||
+      assignedEmails.includes(req.user.email?.toLowerCase())
+    );
+    if (!allowed) { res.status(403).json({ message: 'You do not have access to this interview workspace' }); return null; }
+    return interview;
+  }
   const allowed = req.user.guest
     ? String(ws._id) === String(req.user.workspaceId)
     : String(ws.owner) === String(req.user.userId) ||
@@ -19,7 +35,7 @@ async function getWorkspace(req, res) {
 }
 
 function serialize(file) {
-  return { id: String(file._id), name: file.name, path: file.path, kind: file.kind, language: file.language, content: file.content, parentPath: file.parentPath, updatedAt: file.updatedAt };
+  return { id: String(file._id), workspace: String(file.workspace), name: file.name, path: file.path, kind: file.kind, language: file.language, content: file.content, parentPath: file.parentPath, updatedAt: file.updatedAt };
 }
 
 router.get('/', requireAuth, async (req, res) => {

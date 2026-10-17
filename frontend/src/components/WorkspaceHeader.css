@@ -1,7 +1,8 @@
 .workspace-header {
   height: 64px;
-  background: rgba(9, 16, 29, 0.96);
-  border-bottom: 1px solid rgba(34, 211, 238, 0.16);
+  background: var(--color-sidebar);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-main);
 
   display: flex;
   align-items: center;
@@ -21,11 +22,10 @@
   height: 34px;
   display: grid;
   place-items: center;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #06b6d4, #6366f1);
-  color: white;
-  font-weight: 900;
-  box-shadow: 0 0 20px rgba(6, 182, 212, 0.25);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text-main);
+  font-weight: 700;
 }
 
 .workspace-heading h2 {
@@ -72,7 +72,24 @@
   height: 7px;
   border-radius: 50%;
   background: #22c55e;
-  box-shadow: 0 0 10px #22c55e;
+}
+
+.workspace-control-button {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 9px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface-muted);
+  color: var(--color-text-main);
+  cursor: pointer;
+}
+
+.workspace-control-button:hover {
+  border-color: rgba(var(--color-primary), .35);
 }
 
 .avatar {
@@ -106,8 +123,8 @@
 }
 
 [data-theme="light"] .workspace-header {
-  background: rgba(255, 255, 255, .96);
-  border-color: rgba(31, 73, 75, .13);
+  background: var(--color-sidebar);
+  border-color: var(--color-border);
   color: #203238;
 }
 
@@ -123,3 +140,43 @@
 [data-theme="light"] .avatar { border-color: white; background: #e4f2ee; color: #176a63; }
 [data-theme="light"] .leave-btn { background: #fff4f0; border-color: #f0c8ba; color: #a4442d; }
 [data-theme="light"] .leave-btn:hover { background: #ffebe4; }
+[data-theme="light"] .workspace-control-button { background: #fff; }
+[data-theme="light"] .workspace-share-button { color: #126f6a; }
+
+@media (max-width: 900px) {
+  .workspace-header {
+    height: auto;
+    min-height: 64px;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px 16px;
+  }
+
+  .header-right {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 600px) {
+  .workspace-header {
+    padding: 8px 12px;
+  }
+
+  .room-id,
+  .connection-status,
+  .user-avatars {
+    display: none;
+  }
+
+  .workspace-heading h2 {
+    max-width: 42vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .leave-btn {
+    padding: 7px 10px;
+  }
+}

@@ -16,6 +16,7 @@ const workspaceFileRoutes = require("./routes/workspaceFiles");
 const { YSocketIO } = require("y-socket.io/dist/server");
 const YjsDocument = require("./models/YjsDocument");
 const Workspace = require("./models/Workspace");
+const Interview = require("./models/Interview");
 
 const app = express();
 app.use(cors());
@@ -127,7 +128,7 @@ io.use((socket, next) => {
         userId: payload.userId,
         email: payload.email,
         role: payload.role,
-        ...(payload.guest ? { guest: true, name: payload.name, workspaceId: payload.workspaceId } : {}),
+        ...(payload.guest ? { guest: true, name: payload.name, workspaceId: payload.workspaceId, interviewId: payload.interviewId } : {}),
       };
     } catch (err) {
       // invalid token: proceed unauthenticated rather than hard-failing the socket,
@@ -141,6 +142,9 @@ io.use((socket, next) => {
 io.on("connection", (socket) => {
   console.log(`User connected: ${socket.id}`);
   socket.emit("connected", { socketId: socket.id, user: socket.data.user || null });
+  if (socket.data.user && !socket.data.user.guest) {
+    socket.join(`user:${socket.data.user.userId}`);
+  }
 
   socket.on("join-workspace", async (workspaceId) => {
     if (!workspaceId) return;
@@ -155,11 +159,23 @@ io.on("connection", (socket) => {
         allowed = String(workspaceId) === String(user.workspaceId);
       } else {
         const workspace = await Workspace.findById(workspaceId).select("owner collaborators.user");
-        allowed = Boolean(workspace) && (
-          String(workspace.owner) === String(user.userId) ||
-          workspace.collaborators.some((member) => String(member.user) === String(user.userId)) ||
-          user.role === "admin"
-        );
+        if (workspace) {
+          allowed = String(workspace.owner) === String(user.userId) ||
+            workspace.collaborators.some((member) => String(member.user) === String(user.userId)) ||
+            user.role === "admin";
+        } else {
+          const interview = await Interview.findById(workspaceId).select("interviewer candidate candidates candidateEmail candidateEmails");
+          const assignedEmails = interview?.candidateEmails?.length
+            ? interview.candidateEmails
+            : interview?.candidateEmail ? [interview.candidateEmail] : [];
+          allowed = Boolean(interview) && (
+            String(interview.interviewer) === String(user.userId) ||
+            String(interview.candidate || "") === String(user.userId) ||
+            interview.candidates.some((candidate) => String(candidate) === String(user.userId)) ||
+            assignedEmails.includes(user.email?.toLowerCase()) ||
+            user.role === "admin"
+          );
+        }
       }
       if (!allowed) {
         socket.emit("workspace:access-denied", { workspaceId });
@@ -185,7 +201,45 @@ io.on("connection", (socket) => {
     removePresence(socket, String(workspaceId));
   });
 
-  socket.on("join-room", (roomId) => {
+  socket.on("workspace:file-edit", (payload = {}) => {
+    const { workspaceId, fileId, content } = payload;
+    const roomName = `workspace:${workspaceId}`;
+    if (
+      !socket.rooms.has(roomName) ||
+      typeof fileId !== "string" ||
+      typeof content !== "string" ||
+      content.length > 500000
+    ) return;
+    socket.to(roomName).emit("workspace:file-edit", { workspaceId, fileId, content });
+  });
+
+  socket.on("join-room", async (roomId) => {
+    if (typeof roomId !== "string" || !roomId.trim()) return;
+    if (roomId.startsWith("interview-")) {
+      try {
+        const interview = await Interview.findOne({ roomId }).select("interviewer candidate candidates candidateEmail candidateEmails");
+        const user = socket.data.user;
+        const assignedEmails = interview?.candidateEmails?.length
+          ? interview.candidateEmails
+          : interview?.candidateEmail ? [interview.candidateEmail] : [];
+        const allowed = Boolean(interview && user) && (
+          user.role === "admin" ||
+          String(interview.interviewer) === String(user.userId) ||
+          String(interview.candidate || "") === String(user.userId) ||
+          interview.candidates.some((candidate) => String(candidate) === String(user.userId)) ||
+          assignedEmails.includes(user.email?.toLowerCase()) ||
+          (user.guest && String(user.interviewId) === String(interview._id))
+        );
+        if (!allowed) {
+          socket.emit("interview:access-denied", { roomId });
+          return;
+        }
+      } catch (err) {
+        console.error("Interview room access check failed:", err.message);
+        socket.emit("interview:access-denied", { roomId });
+        return;
+      }
+    }
     socket.join(roomId);
     socket.data.roomId = roomId;
 
@@ -211,17 +265,17 @@ io.on("connection", (socket) => {
   // peers already confirmed to be in the same room. Actual audio flows
   // peer-to-peer once the connection is negotiated.
   socket.on("webrtc-offer", ({ to, offer }) => {
-    if (!to || !offer) return;
+    if (!to || !offer || !rooms.get(socket.data.roomId)?.has(to)) return;
     io.to(to).emit("webrtc-offer", { from: socket.id, offer });
   });
 
   socket.on("webrtc-answer", ({ to, answer }) => {
-    if (!to || !answer) return;
+    if (!to || !answer || !rooms.get(socket.data.roomId)?.has(to)) return;
     io.to(to).emit("webrtc-answer", { from: socket.id, answer });
   });
 
   socket.on("webrtc-ice-candidate", ({ to, candidate }) => {
-    if (!to || !candidate) return;
+    if (!to || !candidate || !rooms.get(socket.data.roomId)?.has(to)) return;
     io.to(to).emit("webrtc-ice-candidate", { from: socket.id, candidate });
   });
 
@@ -229,6 +283,23 @@ io.on("connection", (socket) => {
     const roomId = socket.data.roomId;
     if (!roomId) return;
     socket.to(roomId).emit("mic-state", { userId: socket.id, muted: Boolean(muted) });
+  });
+
+  socket.on("moderator-mute", async ({ targetSocketId } = {}) => {
+    const roomId = socket.data.roomId;
+    const user = socket.data.user;
+    if (!roomId || !user || !["interviewer", "admin"].includes(user.role)) return;
+    try {
+      const participants = await io.in(roomId).fetchSockets();
+      const candidates = targetSocketId
+        ? participants.filter((participant) => participant.id === targetSocketId)
+        : participants.filter((participant) => participant.id !== socket.id && participant.data.user?.role === "user");
+      candidates.forEach((participant) => {
+        if (participant.data.user?.role === "user") participant.emit("moderator-mute");
+      });
+    } catch (err) {
+      console.error("Could not mute interview participants:", err.message);
+    }
   });
 
   // --- Chat (per-room text chat, distinct from the global help chatbox) ---
@@ -275,5 +346,5 @@ process.on("unhandledRejection", (err) => {
   console.error("Unhandled promise rejection:", err);
 });
 
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, AlertCircle } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { ThemeToggle } from "../components/ui/ThemeToggle";
 import "./Register.css";
 
 function Register() {
@@ -46,6 +47,7 @@ function Register() {
 
   return (
     <div className="register-page">
+      <ThemeToggle className="auth-theme-toggle" />
       <div className="register-container">
         <div className="register-brand">
           <img className="register-logo" src="/SyncSpace%20Logo.png" alt="SyncSpace" />

@@ -12,7 +12,7 @@ export const Sidebar = ({ mobileOpen, setMobileOpen }) => {
     { name: 'Workspaces', path: '/workspaces', icon: FolderKanban },
     { name: 'Interviews', path: '/interviews', icon: Video },
     { name: 'Activity History', path: '/audit-logs', icon: ScrollText },
-    ...(role === 'admin' || role === 'interviewer' ? [{ name: 'Recordings', path: '/recordings', icon: PlaySquare }] : []),
+    ...(role === 'admin' || role === 'interviewer' || role === 'user' ? [{ name: 'Recordings', path: '/recordings', icon: PlaySquare }] : []),
     ...(role === 'admin' ? [{ name: 'Admin', path: '/admin', icon: ShieldCheck }] : []),
   ];
   return (

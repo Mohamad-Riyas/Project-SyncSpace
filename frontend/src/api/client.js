@@ -1,7 +1,7 @@
 // Base URL for the real Express/Mongo backend (auth, interviews, admin).
 // Distinct from API_BASE_URL below, which some legacy demo endpoints
 // (/state, /workspaces/*) point at a mock/local API layer.
-const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL || 'http://localhost:5001/api';
+const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL || 'http://localhost:5000/api';
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 const TOKEN_KEY = 'syncspace-token';
@@ -75,6 +75,9 @@ export const interviewsApi = {
     joinAsGuest: (code, name) => authRequest(`/interviews/${encodeURIComponent(code)}/guest`, { method: 'POST', body: JSON.stringify({ name }) }),
     getById: (id) => authRequest(`/interviews/${id}`),
     updateCandidate: (id, candidateEmail) => authRequest(`/interviews/${id}/candidate`, { method: 'PATCH', body: JSON.stringify({ candidateEmail }) }),
+    addCandidate: (id, email) => authRequest(`/interviews/${id}/candidates`, { method: 'POST', body: JSON.stringify({ email }) }),
+    removeCandidate: (id, candidateId) => authRequest(`/interviews/${id}/candidates/${encodeURIComponent(candidateId)}`, { method: 'DELETE' }),
+    removeCandidateByEmail: (id, email) => authRequest(`/interviews/${id}/candidates/by-email/${encodeURIComponent(email)}`, { method: 'DELETE' }),
     updateNotes: (id, notes) => authRequest(`/interviews/${id}/notes`, { method: 'PATCH', body: JSON.stringify({ notes }) }),
     end: (id) => authRequest(`/interviews/${id}/end`, { method: 'POST' }),
     start: (id) => authRequest(`/interviews/${id}/start`, { method: 'POST' }),
@@ -112,7 +115,9 @@ export const recordingsApi = {
     start: (interviewId, mimeType) => authRequest('/recordings/start', { method: 'POST', body: JSON.stringify({ interviewId, mimeType }) }),
     chunk: (id, data) => authRequest(`/recordings/${id}/chunk`, { method: 'POST', body: JSON.stringify({ data }) }),
     finalize: (id, durationSeconds) => authRequest(`/recordings/${id}/finalize`, { method: 'POST', body: JSON.stringify({ durationSeconds }) }),
+    discard: (id) => authRequest(`/recordings/${id}`, { method: 'DELETE' }),
     list: () => authRequest('/recordings'),
+    share: (id) => authRequest(`/recordings/${id}/share`, { method: 'POST' }),
     stream: async (id) => {
         const response = await fetch(`${AUTH_API_URL}/recordings/${id}`, {
             headers: { Authorization: `Bearer ${getToken()}` },

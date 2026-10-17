@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, AlertCircle } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { GoogleSignInButton } from "../components/auth/GoogleSignInButton";
+import { ThemeToggle } from "../components/ui/ThemeToggle";
 import "./Login.css";
 
 const ROLE_HOME = { admin: "/dashboard", interviewer: "/dashboard", user: "/dashboard" };
@@ -57,6 +58,7 @@ function Login() {
 
   return (
     <div className="login-page">
+      <ThemeToggle className="auth-theme-toggle" />
       <div className="login-container">
         <div className="syncspace-brand">
           <img className="syncspace-logo" src="/SyncSpace%20Logo.png" alt="SyncSpace" />

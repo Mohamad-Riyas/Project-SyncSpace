@@ -4,6 +4,7 @@ const recordingSchema = new mongoose.Schema(
   {
     interview: { type: mongoose.Schema.Types.ObjectId, ref: "Interview", required: true, index: true },
     startedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    sharedWith: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     fileName: { type: String, required: true },
     mimeType: { type: String, default: "audio/webm" },
     filePath: { type: String, required: true },

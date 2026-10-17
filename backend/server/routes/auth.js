@@ -76,7 +76,7 @@ function hashToken(token) {
 
 function createVerificationUrl(token) {
   const backendUrl = (
-    process.env.BACKEND_URL || "http://localhost:5001"
+    process.env.BACKEND_URL || "http://localhost:5000"
   ).replace(/\/+$/, "");
 
   return `${backendUrl}/api/auth/verify-email?token=${encodeURIComponent(token)}`;
